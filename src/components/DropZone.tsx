@@ -74,7 +74,7 @@ export default function DropZone({ onFileLoad }: DropZoneProps) {
         onChange={onChange}
         style={{ display: 'none' }}
       />
-      <div className="dropzone__icon">&#128506;</div>
+      <img className="dropzone__icon" src="/favicon.svg" alt="" aria-hidden="true" />
       <p className="dropzone__title">{t('dropzone.title')}</p>
       <p className="dropzone__subtitle">{t('dropzone.subtitle')}</p>
       {error && <p className="dropzone__error">{error}</p>}

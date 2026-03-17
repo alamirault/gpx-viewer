@@ -40,5 +40,9 @@
     "startPoint": "Départ",
     "endPoint": "Arrivée"
   },
+  "hero": {
+    "tagline": "Explorez vos traces GPS",
+    "description": "Importez un fichier .gpx pour visualiser votre parcours en carte 2D/3D, profil d'altitude et métriques clés."
+  },
   "na": "N/A"
 }

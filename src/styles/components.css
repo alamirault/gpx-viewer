@@ -86,7 +86,8 @@
 }
 
 .drop-overlay__icon {
-  font-size: 48px;
+  width: 56px;
+  height: 56px;
   margin-bottom: var(--space-lg);
 }
 
@@ -102,8 +103,74 @@
   color: var(--color-text-secondary);
 }
 
+/* ===== Hero (homepage) ===== */
+.hero {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 30%;
+  overflow: hidden;
+}
+
+.hero__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xl);
+  width: 100%;
+  max-width: 560px;
+  padding: 0 var(--space-xl);
+  z-index: 1;
+}
+
+.hero__intro {
+  text-align: center;
+}
+
+.hero__tagline {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  margin: 0 0 var(--space-sm);
+}
+
+.hero__description {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.hero__landscape {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@media (max-width: 767px) {
+  .hero {
+    padding-bottom: 35%;
+  }
+}
+
 /* ===== DropZone ===== */
+.hero .dropzone {
+  flex: none;
+  width: 100%;
+  min-height: 150px;
+  margin: 0;
+}
+
 .dropzone {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -135,7 +202,8 @@
 }
 
 .dropzone__icon {
-  font-size: 48px;
+  width: 56px;
+  height: 56px;
   margin-bottom: var(--space-lg);
 }
 

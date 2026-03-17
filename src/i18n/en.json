@@ -40,5 +40,9 @@
     "startPoint": "Start",
     "endPoint": "End"
   },
+  "hero": {
+    "tagline": "Explore your GPS tracks",
+    "description": "Import a .gpx file to visualize your route on an interactive 2D/3D map, elevation profile and key metrics."
+  },
   "na": "N/A"
 }
