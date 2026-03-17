@@ -23,7 +23,7 @@ export default function ElevationChart({ chartData }: ElevationChartProps) {
   return (
     <div className="elevation-chart">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={filteredData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+        <AreaChart data={filteredData} margin={{ top: 10, right: 20, left: 10, bottom: 20 }}>
           <defs>
             <linearGradient id="elevGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#4CAF82" stopOpacity={0.6} />
