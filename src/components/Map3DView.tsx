@@ -24,11 +24,12 @@ type ViewMode = 'satellite' | 'terrain';
 interface Map3DViewProps {
   points: GpxPoint[];
   hoverPoint: { lat: number; lon: number } | null;
+  pinnedPoint: { lat: number; lon: number } | null;
   cameraState: CameraState | null;
   onCameraChange: (c: CameraState) => void;
 }
 
-export default function Map3DView({ points, hoverPoint, cameraState, onCameraChange }: Map3DViewProps) {
+export default function Map3DView({ points, hoverPoint, pinnedPoint, cameraState, onCameraChange }: Map3DViewProps) {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -40,6 +41,8 @@ export default function Map3DView({ points, hoverPoint, cameraState, onCameraCha
   const initialCameraRef = useRef<{ bearing: number; pitch: number; bounds: [[number, number], [number, number]] } | null>(null);
   // Hover marker from elevation chart
   const hoverMarkerRef = useRef<maplibregl.Marker | null>(null);
+  // Pinned marker (click on chart)
+  const pinnedMarkerRef = useRef<maplibregl.Marker | null>(null);
 
   // Update hover marker position when chart is hovered
   useEffect(() => {
@@ -60,6 +63,21 @@ export default function Map3DView({ points, hoverPoint, cameraState, onCameraCha
       hoverMarkerRef.current = null;
     }
   }, [hoverPoint]);
+
+  // Update pinned marker (click on elevation chart) — recreate each time to replay animation
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapLoadedRef.current) return;
+    pinnedMarkerRef.current?.remove();
+    pinnedMarkerRef.current = null;
+    if (pinnedPoint) {
+      const el = document.createElement('div');
+      el.className = 'map-pin-marker';
+      pinnedMarkerRef.current = new maplibregl.Marker({ element: el, anchor: 'center' })
+        .setLngLat([pinnedPoint.lon, pinnedPoint.lat])
+        .addTo(map);
+    }
+  }, [pinnedPoint]);
 
   // Sync ref and toggle layer visibility when viewMode changes
   useEffect(() => {
@@ -297,6 +315,8 @@ export default function Map3DView({ points, hoverPoint, cameraState, onCameraCha
       mapLoadedRef.current = false;
       hoverMarkerRef.current?.remove();
       hoverMarkerRef.current = null;
+      pinnedMarkerRef.current?.remove();
+      pinnedMarkerRef.current = null;
       canvas.removeEventListener('mousedown', onMouseDown);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);

@@ -93,14 +93,37 @@ function HoverMarker({ point }: { point: { lat: number; lon: number } | null }) 
   return null;
 }
 
+const pinnedIcon = L.divIcon({
+  className: 'map-pin-marker',
+  iconSize: [16, 16],
+  iconAnchor: [8, 8],
+});
+
+function PinnedMarker({ point }: { point: { lat: number; lon: number } | null }) {
+  const map = useMap();
+  const markerRef = useRef<L.Marker | null>(null);
+
+  // Recreate marker on each change to replay the pulse animation
+  useEffect(() => {
+    markerRef.current?.remove();
+    markerRef.current = null;
+    if (point) {
+      markerRef.current = L.marker([point.lat, point.lon], { icon: pinnedIcon, interactive: false }).addTo(map);
+    }
+  }, [point, map]);
+
+  return null;
+}
+
 interface MapViewProps {
   points: GpxPoint[];
   hoverPoint: { lat: number; lon: number } | null;
+  pinnedPoint: { lat: number; lon: number } | null;
   cameraState: CameraState | null;
   onCameraChange: (c: CameraState) => void;
 }
 
-export default function MapView({ points, hoverPoint, cameraState, onCameraChange }: MapViewProps) {
+export default function MapView({ points, hoverPoint, pinnedPoint, cameraState, onCameraChange }: MapViewProps) {
   const positions = points.map((p) => [p.lat, p.lon] as L.LatLngTuple);
   const start = positions[0]!;
   const end = positions[positions.length - 1]!;
@@ -128,6 +151,7 @@ export default function MapView({ points, hoverPoint, cameraState, onCameraChang
         {!cameraState && <FitBounds points={points} />}
         <CameraSync onCameraChange={onCameraChange} />
         <HoverMarker point={hoverPoint} />
+        <PinnedMarker point={pinnedPoint} />
       </MapContainer>
     </div>
   );

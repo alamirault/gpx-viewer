@@ -14,21 +14,29 @@ import type { ChartDataPoint } from '../utils/gpxParser';
 interface ElevationChartProps {
   chartData: ChartDataPoint[];
   onHover?: (point: { lat: number; lon: number } | null) => void;
+  onPin?: (point: { lat: number; lon: number }) => void;
 }
 
-export default function ElevationChart({ chartData, onHover }: ElevationChartProps) {
+export default function ElevationChart({ chartData, onHover, onPin }: ElevationChartProps) {
   const { t } = useTranslation();
 
   const filteredData = chartData.filter((d) => d.elevation !== null);
   if (filteredData.length === 0) return null;
 
+  const getPayloadPoint = (state: CategoricalChartState) =>
+    state.activePayload?.[0]?.payload as ChartDataPoint | undefined;
+
   const handleMouseMove = (state: CategoricalChartState) => {
-    if (!onHover) return;
-    const point = state.activePayload?.[0]?.payload as ChartDataPoint | undefined;
-    if (point) onHover({ lat: point.lat, lon: point.lon });
+    const point = getPayloadPoint(state);
+    if (point) onHover?.({ lat: point.lat, lon: point.lon });
   };
 
   const handleMouseLeave = () => onHover?.(null);
+
+  const handleClick = (state: CategoricalChartState) => {
+    const point = getPayloadPoint(state);
+    if (point) onPin?.({ lat: point.lat, lon: point.lon });
+  };
 
   return (
     <div className="elevation-chart">
@@ -38,6 +46,8 @@ export default function ElevationChart({ chartData, onHover }: ElevationChartPro
           margin={{ top: 10, right: 20, left: 10, bottom: 20 }}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
+          onClick={handleClick}
+          style={{ cursor: 'crosshair' }}
         >
           <defs>
             <linearGradient id="elevGradient" x1="0" y1="0" x2="0" y2="1">
