@@ -217,6 +217,18 @@
   color: white;
 }
 
+/* ===== MapLibre marker overrides ===== */
+.map-marker {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  cursor: default;
+}
+.map-marker--start { background: #10B981; }
+.map-marker--end   { background: #EF4444; }
+
 /* ===== 3D Map ===== */
 .map-3d {
   position: relative;

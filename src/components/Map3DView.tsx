@@ -1,177 +1,63 @@
-import { useMemo, useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Grid, Line } from '@react-three/drei';
-import * as THREE from 'three';
+import { useEffect, useRef } from 'react';
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import { useTranslation } from 'react-i18next';
 import type { GpxPoint } from '../utils/gpxParser';
 
-const TO_RAD = Math.PI / 180;
-const R_EARTH = 6371000;
+// Free terrain DEM tiles (AWS Terrarium, no API key needed)
+const TERRAIN_TILES = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
+// Free OSM raster tiles
+const OSM_TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 
-function elevationColor(t: number): THREE.Color {
-  // Gradient: blue (0) → green (0.4) → amber (0.7) → red (1)
+function elevationColor(t: number): string {
   if (t < 0.4) {
     const s = t / 0.4;
-    return new THREE.Color().lerpColors(
-      new THREE.Color('#3B82F6'),
-      new THREE.Color('#10B981'),
-      s
-    );
+    return lerpColor('#3B82F6', '#10B981', s);
   } else if (t < 0.7) {
     const s = (t - 0.4) / 0.3;
-    return new THREE.Color().lerpColors(
-      new THREE.Color('#10B981'),
-      new THREE.Color('#F59E0B'),
-      s
-    );
+    return lerpColor('#10B981', '#F59E0B', s);
   } else {
     const s = (t - 0.7) / 0.3;
-    return new THREE.Color().lerpColors(
-      new THREE.Color('#F59E0B'),
-      new THREE.Color('#EF4444'),
-      s
-    );
+    return lerpColor('#F59E0B', '#EF4444', s);
   }
 }
 
-function projectPoints(points: GpxPoint[]): {
-  positions: [number, number, number][];
-  colors: THREE.Color[];
-  groundY: number;
-} {
-  const lats = points.map((p) => p.lat);
-  const lons = points.map((p) => p.lon);
-  const eles = points.map((p) => p.ele ?? 0);
+function lerpColor(a: string, b: string, t: number): string {
+  const parse = (hex: string) => [
+    parseInt(hex.slice(1, 3), 16),
+    parseInt(hex.slice(3, 5), 16),
+    parseInt(hex.slice(5, 7), 16),
+  ];
+  const [ar, ag, ab] = parse(a);
+  const [br, bg, bb] = parse(b);
+  const r = Math.round(ar! + (br! - ar!) * t);
+  const g = Math.round(ag! + (bg! - ag!) * t);
+  const bl = Math.round(ab! + (bb! - ab!) * t);
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${bl.toString(16).padStart(2, '0')}`;
+}
 
-  const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
-  const centerLon = (Math.min(...lons) + Math.max(...lons)) / 2;
-
-  const xs = points.map(
-    (p) => (p.lon - centerLon) * TO_RAD * R_EARTH * Math.cos(centerLat * TO_RAD)
-  );
-  const ys = points.map((p) => (p.lat - centerLat) * TO_RAD * R_EARTH);
-
-  const xRange = Math.max(...xs) - Math.min(...xs) || 1;
-  const yRange = Math.max(...ys) - Math.min(...ys) || 1;
-  const horizSpan = Math.max(xRange, yRange);
-  const scale = 10 / horizSpan;
-
-  const eleMin = Math.min(...eles);
-  const eleMax = Math.max(...eles);
+function buildTrackGeoJSON(points: GpxPoint[], eleMin: number, eleMax: number) {
   const eleRange = eleMax - eleMin || 1;
+  const features = [];
 
-  // Vertical exaggeration: make elevation span at least 2 units, max 8
-  const naturalEleScale = eleRange * scale;
-  const targetEleScale = Math.max(2, Math.min(8, horizSpan * scale * 0.35));
-  const vExag = targetEleScale / naturalEleScale;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p = points[i]!;
+    const q = points[i + 1]!;
+    const t = p.ele !== null ? (p.ele - eleMin) / eleRange : 0.5;
+    features.push({
+      type: 'Feature' as const,
+      properties: { color: elevationColor(t) },
+      geometry: {
+        type: 'LineString' as const,
+        coordinates: [
+          [p.lon, p.lat],
+          [q.lon, q.lat],
+        ],
+      },
+    });
+  }
 
-  const groundY = eleMin * scale * vExag;
-
-  const positions: [number, number, number][] = points.map((p, i) => [
-    xs[i]! * scale,
-    eles[i]! * scale * vExag,
-    -ys[i]! * scale,
-  ]);
-
-  const colors: THREE.Color[] = eles.map((e) =>
-    elevationColor((e - eleMin) / eleRange)
-  );
-
-  return { positions, colors, groundY };
-}
-
-function StartEndMarkers({
-  start,
-  end,
-}: {
-  start: [number, number, number];
-  end: [number, number, number];
-}) {
-  return (
-    <>
-      <mesh position={start}>
-        <sphereGeometry args={[0.12, 16, 16]} />
-        <meshStandardMaterial color="#10B981" />
-      </mesh>
-      <mesh position={end}>
-        <sphereGeometry args={[0.12, 16, 16]} />
-        <meshStandardMaterial color="#EF4444" />
-      </mesh>
-    </>
-  );
-}
-
-function AnimatedCamera() {
-  const angle = useRef(0);
-  const animating = useRef(true);
-
-  useFrame((state, delta) => {
-    if (!animating.current) return;
-    angle.current += delta * 0.3;
-    if (angle.current > Math.PI * 0.5) {
-      animating.current = false;
-      return;
-    }
-    state.camera.position.setFromSphericalCoords(
-      18,
-      Math.PI / 3 - angle.current * 0.2,
-      angle.current
-    );
-    state.camera.lookAt(0, 0, 0);
-  });
-
-  return null;
-}
-
-function Track({ points }: { points: GpxPoint[] }) {
-  const { positions, colors, groundY } = useMemo(() => projectPoints(points), [points]);
-
-  return (
-    <>
-      <AnimatedCamera />
-
-      {/* Ground grid */}
-      <Grid
-        position={[0, groundY - 0.3, 0]}
-        args={[24, 24]}
-        cellSize={1}
-        cellThickness={0.5}
-        cellColor="#c8d5ce"
-        sectionSize={5}
-        sectionThickness={1}
-        sectionColor="#a0b8ad"
-        fadeDistance={30}
-        fadeStrength={1}
-        infiniteGrid
-      />
-
-      {/* Vertical drop lines from each point to ground */}
-      {positions.filter((_, i) => i % 20 === 0).map((pos, i) => (
-        <Line
-          key={i}
-          points={[pos, [pos[0], groundY, pos[2]]]}
-          color="#c8d5ce"
-          lineWidth={0.5}
-          opacity={0.5}
-          transparent
-        />
-      ))}
-
-      {/* Main track */}
-      <Line
-        points={positions}
-        vertexColors={colors}
-        lineWidth={3}
-      />
-
-      {/* Start/end markers */}
-      <StartEndMarkers start={positions[0]!} end={positions[positions.length - 1]!} />
-
-      {/* Lighting */}
-      <ambientLight intensity={0.8} />
-      <directionalLight position={[10, 20, 10]} intensity={0.6} />
-    </>
-  );
+  return { type: 'FeatureCollection' as const, features };
 }
 
 interface Map3DViewProps {
@@ -180,32 +66,133 @@ interface Map3DViewProps {
 
 export default function Map3DView({ points }: Map3DViewProps) {
   const { t } = useTranslation();
-  const hasElevation = points.some((p) => p.ele !== null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
+
+  useEffect(() => {
+    if (!containerRef.current || points.length === 0) return;
+
+    const lats = points.map((p) => p.lat);
+    const lons = points.map((p) => p.lon);
+    const eles = points.map((p) => p.ele ?? 0);
+    const eleMin = Math.min(...eles);
+    const eleMax = Math.max(...eles);
+
+    const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
+    const centerLon = (Math.min(...lons) + Math.max(...lons)) / 2;
+
+    const map = new maplibregl.Map({
+      container: containerRef.current,
+      style: {
+        version: 8,
+        sources: {
+          osm: {
+            type: 'raster',
+            tiles: [OSM_TILES],
+            tileSize: 256,
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            maxzoom: 19,
+          },
+          'terrain-dem': {
+            type: 'raster-dem',
+            tiles: [TERRAIN_TILES],
+            tileSize: 256,
+            encoding: 'terrarium' as const,
+            maxzoom: 15,
+          },
+        },
+        layers: [
+          {
+            id: 'osm-tiles',
+            type: 'raster',
+            source: 'osm',
+          },
+        ],
+        sky: {
+          'sky-color': '#87CEEB',
+          'sky-horizon-blend': 0.5,
+          'horizon-color': '#f4f8fb',
+          'horizon-fog-blend': 0.5,
+          'atmosphere-blend': 0.3,
+        },
+      },
+      center: [centerLon, centerLat],
+      zoom: 12,
+      pitch: 60,
+      bearing: -15,
+      antialias: true,
+    });
+
+    mapRef.current = map;
+
+    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
+
+    map.on('load', () => {
+      // Enable 3D terrain
+      map.setTerrain({ source: 'terrain-dem', exaggeration: 1.5 });
+
+      // Add GPX track
+      const trackGeoJSON = buildTrackGeoJSON(points, eleMin, eleMax);
+      map.addSource('track', { type: 'geojson', data: trackGeoJSON });
+
+      // Track shadow (outline)
+      map.addLayer({
+        id: 'track-outline',
+        type: 'line',
+        source: 'track',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-color': 'rgba(0,0,0,0.3)',
+          'line-width': 8,
+          'line-blur': 2,
+        },
+      });
+
+      // Colored track by elevation
+      map.addLayer({
+        id: 'track-line',
+        type: 'line',
+        source: 'track',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-color': ['get', 'color'],
+          'line-width': 4,
+        },
+      });
+
+      // Start marker
+      const startEl = document.createElement('div');
+      startEl.className = 'map-marker map-marker--start';
+      new maplibregl.Marker({ element: startEl })
+        .setLngLat([points[0]!.lon, points[0]!.lat])
+        .addTo(map);
+
+      // End marker
+      const endEl = document.createElement('div');
+      endEl.className = 'map-marker map-marker--end';
+      new maplibregl.Marker({ element: endEl })
+        .setLngLat([points[points.length - 1]!.lon, points[points.length - 1]!.lat])
+        .addTo(map);
+
+      // Fit bounds with 3D pitch
+      map.fitBounds(
+        [
+          [Math.min(...lons), Math.min(...lats)],
+          [Math.max(...lons), Math.max(...lats)],
+        ],
+        { padding: 60, pitch: 60, bearing: -15, duration: 1200 }
+      );
+    });
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+    };
+  }, [points]);
 
   return (
     <div className="map-container map-3d">
-      <Canvas
-        camera={{ position: [0, 12, 18], fov: 45 }}
-        style={{ background: '#F0F5F2' }}
-      >
-        {hasElevation ? (
-          <Track points={points} />
-        ) : (
-          <Track points={points.map((p) => ({ ...p, ele: 0 }))} />
-        )}
-        <OrbitControls
-          enablePan
-          enableZoom
-          enableRotate
-          minDistance={3}
-          maxDistance={40}
-          maxPolarAngle={Math.PI / 2}
-        />
-      </Canvas>
-
-      {!hasElevation && (
-        <div className="map-3d__no-elevation">{t('map.noElevation')}</div>
-      )}
+      <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
 
       {/* Elevation legend */}
       <div className="map-3d__legend" aria-label="Légende altitude">

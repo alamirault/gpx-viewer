@@ -30,7 +30,7 @@
     "view3D": "3D",
     "viewToggle": "View mode",
     "noElevation": "No elevation data available in this GPX file",
-    "hint": "Click + drag to rotate · Scroll to zoom"
+    "hint": "Click + drag to rotate · Scroll to zoom · Ctrl+drag to tilt"
   },
   "na": "N/A"
 }
