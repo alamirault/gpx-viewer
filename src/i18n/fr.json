@@ -31,6 +31,7 @@
     "viewToggle": "Mode de vue",
     "noElevation": "Aucune donnée d'altitude disponible dans ce fichier GPX",
     "hint": "Cliquer + glisser pour pivoter · Molette pour zoomer · Ctrl+glisser pour incliner",
+    "resetView": "Vue initiale",
     "viewMode": "Style de carte",
     "modeSatellite": "Satellite",
     "modeTerrain": "Terrain",

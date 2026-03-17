@@ -32,6 +32,8 @@ export default function Map3DView({ points }: Map3DViewProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('satellite');
   // Ref to avoid stale closure in map.on('load') callback
   const viewModeRef = useRef<ViewMode>('satellite');
+  // Store initial camera state for the reset button
+  const initialCameraRef = useRef<{ bearing: number; pitch: number; bounds: [[number, number], [number, number]] } | null>(null);
 
   // Sync ref and toggle layer visibility when viewMode changes
   useEffect(() => {
@@ -142,7 +144,15 @@ export default function Map3DView({ points }: Map3DViewProps) {
 
     mapRef.current = map;
 
-    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
+    // Only zoom buttons — compass replaced by the custom reset button below
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+
+    // Store initial camera for the reset button
+    initialCameraRef.current = {
+      bearing,
+      pitch: 70,
+      bounds: [[minLon, minLat], [maxLon, maxLat]],
+    };
 
     // Custom right-click drag: replace default dragRotate with slower sensitivity
     map.dragRotate.disable();
@@ -262,6 +272,20 @@ export default function Map3DView({ points }: Map3DViewProps) {
   return (
     <div className="map-container map-3d">
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+
+      <button
+        className="map-3d__reset-btn"
+        onClick={() => {
+          const cam = initialCameraRef.current;
+          const map = mapRef.current;
+          if (!cam || !map) return;
+          map.fitBounds(cam.bounds, { padding: 60, pitch: cam.pitch, bearing: cam.bearing, duration: 800 });
+        }}
+        title={t('map.resetView')}
+        aria-label={t('map.resetView')}
+      >
+        ↺ {t('map.resetView')}
+      </button>
 
       <div className="map-3d__mode-toggle" role="group" aria-label={t('map.viewMode')}>
         <button

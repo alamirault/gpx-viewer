@@ -31,6 +31,7 @@
     "viewToggle": "View mode",
     "noElevation": "No elevation data available in this GPX file",
     "hint": "Click + drag to rotate · Scroll to zoom · Ctrl+drag to tilt",
+    "resetView": "Reset view",
     "viewMode": "Map style",
     "modeSatellite": "Satellite",
     "modeTerrain": "Terrain",

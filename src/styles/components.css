@@ -288,6 +288,29 @@
   z-index: 10;
 }
 
+.map-3d__reset-btn {
+  position: absolute;
+  top: var(--space-md);
+  right: 52px; /* clear of the MapLibre zoom control (≈40px wide) */
+  border: none;
+  background: rgba(255, 255, 255, 0.92);
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  padding: 4px var(--space-md);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  z-index: 10;
+  transition: background var(--transition-fast);
+  white-space: nowrap;
+}
+
+.map-3d__reset-btn:hover {
+  background: rgba(255, 255, 255, 1);
+}
+
 .map-3d__mode-toggle {
   position: absolute;
   top: var(--space-md);
