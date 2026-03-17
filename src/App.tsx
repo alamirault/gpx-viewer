@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseGPX } from './utils/gpxParser';
 import type { GpxData } from './utils/gpxParser';
@@ -17,10 +17,22 @@ export default function App() {
   const [is3D, setIs3D] = useState(false);
   const [hoverPoint, setHoverPoint] = useState<{ lat: number; lon: number } | null>(null);
 
+  // Restore last GPX from localStorage on first load
+  useEffect(() => {
+    const saved = localStorage.getItem('gpx-last');
+    if (!saved) return;
+    try {
+      setGpxData(parseGPX(saved));
+    } catch {
+      localStorage.removeItem('gpx-last');
+    }
+  }, []);
+
   const handleFileLoad = (gpxString: string) => {
     try {
       setError(null);
       const data = parseGPX(gpxString);
+      localStorage.setItem('gpx-last', gpxString);
       setGpxData(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -29,6 +41,7 @@ export default function App() {
   };
 
   const handleReset = () => {
+    localStorage.removeItem('gpx-last');
     setGpxData(null);
     setError(null);
     setIs3D(false);
