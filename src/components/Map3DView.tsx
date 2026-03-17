@@ -15,8 +15,8 @@ const TERRAIN_TILES = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{
 const SATELLITE_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
 // Esri Reference overlay — labels, peaks, place names
 const LABELS_TILES = 'https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}';
-// Esri World Terrain Base — hypsometric tinting (green → brown → grey by elevation)
-const TERRAIN_VISUAL_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}';
+// OpenTopoMap — hypsometric tinting (green → brown → grey by elevation) + contours
+const TERRAIN_VISUAL_TILES = 'https://tile.opentopomap.org/{z}/{x}/{y}.png';
 
 type ViewMode = 'satellite' | 'terrain';
 
@@ -94,8 +94,8 @@ export default function Map3DView({ points }: Map3DViewProps) {
             type: 'raster',
             tiles: [TERRAIN_VISUAL_TILES],
             tileSize: 256,
-            attribution: '© <a href="https://www.esri.com">Esri</a>',
-            maxzoom: 13,
+            attribution: '© <a href="https://opentopomap.org">OpenTopoMap</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            maxzoom: 17,
           },
           'terrain-dem': {
             type: 'raster-dem',
