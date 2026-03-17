@@ -2,6 +2,13 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseGPX } from './utils/gpxParser';
 import type { GpxData } from './utils/gpxParser';
+
+export interface CameraState {
+  center: [number, number]; // [lat, lon]
+  zoom: number;
+  bearing: number;
+  pitch: number;
+}
 import DropZone from './components/DropZone';
 import MapView from './components/MapView';
 import Map3DView from './components/Map3DView';
@@ -16,6 +23,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [is3D, setIs3D] = useState(false);
   const [hoverPoint, setHoverPoint] = useState<{ lat: number; lon: number } | null>(null);
+  const [cameraState, setCameraState] = useState<CameraState | null>(null);
 
   // Restore last GPX from localStorage on first load
   useEffect(() => {
@@ -33,6 +41,7 @@ export default function App() {
       setError(null);
       const data = parseGPX(gpxString);
       localStorage.setItem('gpx-last', gpxString);
+      setCameraState(null); // reset camera so fitBounds runs on new file
       setGpxData(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -45,6 +54,7 @@ export default function App() {
     setGpxData(null);
     setError(null);
     setIs3D(false);
+    setCameraState(null);
   };
 
   return (
@@ -91,9 +101,9 @@ export default function App() {
                 </button>
               </div>
               {is3D ? (
-                <Map3DView points={gpxData.points} hoverPoint={hoverPoint} />
+                <Map3DView points={gpxData.points} hoverPoint={hoverPoint} cameraState={cameraState} onCameraChange={setCameraState} />
               ) : (
-                <MapView points={gpxData.points} hoverPoint={hoverPoint} />
+                <MapView points={gpxData.points} hoverPoint={hoverPoint} cameraState={cameraState} onCameraChange={setCameraState} />
               )}
             </div>
             <div className="content__sidebar">

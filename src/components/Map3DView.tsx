@@ -3,6 +3,7 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useTranslation } from 'react-i18next';
 import type { GpxPoint } from '../utils/gpxParser';
+import type { CameraState } from '../App';
 import {
   buildTrackGeoJSON,
   computeBearing,
@@ -23,9 +24,11 @@ type ViewMode = 'satellite' | 'terrain';
 interface Map3DViewProps {
   points: GpxPoint[];
   hoverPoint: { lat: number; lon: number } | null;
+  cameraState: CameraState | null;
+  onCameraChange: (c: CameraState) => void;
 }
 
-export default function Map3DView({ points, hoverPoint }: Map3DViewProps) {
+export default function Map3DView({ points, hoverPoint, cameraState, onCameraChange }: Map3DViewProps) {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -158,10 +161,10 @@ export default function Map3DView({ points, hoverPoint }: Map3DViewProps) {
           'atmosphere-blend': 0.5,
         },
       },
-      center: [centerLon, centerLat],
-      zoom: 12,
-      pitch: 70,
-      bearing,
+      center: cameraState ? [cameraState.center[1], cameraState.center[0]] : [centerLon, centerLat],
+      zoom: cameraState ? cameraState.zoom : 12,
+      pitch: cameraState ? cameraState.pitch : 70,
+      bearing: cameraState ? cameraState.bearing : bearing,
       antialias: true,
     });
 
@@ -270,14 +273,23 @@ export default function Map3DView({ points, hoverPoint }: Map3DViewProps) {
         .setLngLat([lastPoint.lon, lastPoint.lat])
         .addTo(map);
 
-      // Fit bounds with 3D pitch
-      map.fitBounds(
-        [
-          [minLon, minLat],
-          [maxLon, maxLat],
-        ],
-        { padding: 60, pitch: 70, bearing, duration: 1200 }
-      );
+      // Fit bounds only when no saved camera state
+      if (!cameraState) {
+        map.fitBounds(
+          [
+            [minLon, minLat],
+            [maxLon, maxLat],
+          ],
+          { padding: 60, pitch: 70, bearing, duration: 1200 }
+        );
+      }
+
+      // Sync camera state on every move (pan, zoom, rotate, pitch)
+      map.on('moveend', () => {
+        if (destroyed) return;
+        const c = map.getCenter();
+        onCameraChange({ center: [c.lat, c.lng], zoom: map.getZoom(), bearing: map.getBearing(), pitch: map.getPitch() });
+      });
     });
 
     return () => {

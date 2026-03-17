@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Polyline, Marker, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Polyline, Marker, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { GpxPoint } from '../utils/gpxParser';
+import type { CameraState } from '../App';
 
 const hoverIcon = L.divIcon({
   className: 'map-hover-marker',
@@ -36,6 +37,16 @@ const endIcon = new L.Icon({
   popupAnchor: [1, -34],
   shadowSize: [41, 41],
 });
+
+function CameraSync({ onCameraChange }: { onCameraChange: (c: CameraState) => void }) {
+  const map = useMapEvents({
+    moveend: () => {
+      const c = map.getCenter();
+      onCameraChange({ center: [c.lat, c.lng], zoom: map.getZoom(), bearing: 0, pitch: 0 });
+    },
+  });
+  return null;
+}
 
 function ZoomControl() {
   const map = useMap();
@@ -85,18 +96,23 @@ function HoverMarker({ point }: { point: { lat: number; lon: number } | null }) 
 interface MapViewProps {
   points: GpxPoint[];
   hoverPoint: { lat: number; lon: number } | null;
+  cameraState: CameraState | null;
+  onCameraChange: (c: CameraState) => void;
 }
 
-export default function MapView({ points, hoverPoint }: MapViewProps) {
+export default function MapView({ points, hoverPoint, cameraState, onCameraChange }: MapViewProps) {
   const positions = points.map((p) => [p.lat, p.lon] as L.LatLngTuple);
   const start = positions[0]!;
   const end = positions[positions.length - 1]!;
 
+  const initialCenter = cameraState ? [cameraState.center[0], cameraState.center[1]] as L.LatLngTuple : start;
+  const initialZoom = cameraState ? cameraState.zoom : 13;
+
   return (
     <div className="map-container">
       <MapContainer
-        center={start}
-        zoom={13}
+        center={initialCenter}
+        zoom={initialZoom}
         style={{ height: '100%', width: '100%' }}
         scrollWheelZoom={true}
         zoomControl={false}
@@ -109,7 +125,8 @@ export default function MapView({ points, hoverPoint }: MapViewProps) {
         <Marker position={start} icon={startIcon} />
         <Marker position={end} icon={endIcon} />
         <ZoomControl />
-        <FitBounds points={points} />
+        {!cameraState && <FitBounds points={points} />}
+        <CameraSync onCameraChange={onCameraChange} />
         <HoverMarker point={hoverPoint} />
       </MapContainer>
     </div>
