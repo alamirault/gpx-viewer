@@ -18,7 +18,7 @@ interface ElevationChartProps {
 }
 
 export default function ElevationChart({ chartData, onHover, onPin }: ElevationChartProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const filteredData = chartData.filter((d) => d.elevation !== null);
   if (filteredData.length === 0) return null;
@@ -41,7 +41,7 @@ export default function ElevationChart({ chartData, onHover, onPin }: ElevationC
   return (
     <div className="elevation-chart">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart
+        <AreaChart key={i18n.language}
           data={filteredData}
           margin={{ top: 10, right: 20, left: 10, bottom: 20 }}
           onMouseMove={handleMouseMove}
