@@ -49,6 +49,7 @@ body {
 .content__map {
   flex: 0 0 60%;
   min-height: 0;
+  position: relative;
 }
 
 .content__sidebar {

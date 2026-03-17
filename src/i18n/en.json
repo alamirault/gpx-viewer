@@ -25,5 +25,12 @@
     "distance": "Distance (km)",
     "elevation": "Elevation (m)"
   },
+  "map": {
+    "view2D": "2D",
+    "view3D": "3D",
+    "viewToggle": "View mode",
+    "noElevation": "No elevation data available in this GPX file",
+    "hint": "Click + drag to rotate · Scroll to zoom"
+  },
   "na": "N/A"
 }

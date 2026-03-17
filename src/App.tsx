@@ -4,6 +4,7 @@ import { parseGPX } from './utils/gpxParser';
 import type { GpxData } from './utils/gpxParser';
 import DropZone from './components/DropZone';
 import MapView from './components/MapView';
+import Map3DView from './components/Map3DView';
 import ElevationChart from './components/ElevationChart';
 import MetricsPanel from './components/MetricsPanel';
 import LanguageSwitcher from './components/LanguageSwitcher';
@@ -13,6 +14,7 @@ export default function App() {
   const { t } = useTranslation();
   const [gpxData, setGpxData] = useState<GpxData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [is3D, setIs3D] = useState(false);
 
   const handleFileLoad = (gpxString: string) => {
     try {
@@ -28,6 +30,7 @@ export default function App() {
   const handleReset = () => {
     setGpxData(null);
     setError(null);
+    setIs3D(false);
   };
 
   return (
@@ -57,7 +60,27 @@ export default function App() {
         ) : (
           <div className="content">
             <div className="content__map">
-              <MapView points={gpxData.points} />
+              <div className="map-toggle" role="group" aria-label={t('map.viewToggle')}>
+                <button
+                  className={`map-toggle__btn${!is3D ? ' map-toggle__btn--active' : ''}`}
+                  onClick={() => setIs3D(false)}
+                  aria-pressed={!is3D}
+                >
+                  {t('map.view2D')}
+                </button>
+                <button
+                  className={`map-toggle__btn${is3D ? ' map-toggle__btn--active' : ''}`}
+                  onClick={() => setIs3D(true)}
+                  aria-pressed={is3D}
+                >
+                  {t('map.view3D')}
+                </button>
+              </div>
+              {is3D ? (
+                <Map3DView points={gpxData.points} />
+              ) : (
+                <MapView points={gpxData.points} />
+              )}
             </div>
             <div className="content__sidebar">
               <MetricsPanel metrics={gpxData.metrics} />

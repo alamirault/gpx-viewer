@@ -178,6 +178,104 @@
   }
 }
 
+/* ===== Map Toggle (2D/3D) ===== */
+.map-toggle {
+  display: flex;
+  position: absolute;
+  top: var(--space-md);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 500;
+  background: var(--color-surface);
+  border-radius: var(--radius-pill);
+  padding: 3px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border);
+}
+
+.map-toggle__btn {
+  background: none;
+  border: none;
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: var(--space-xs) var(--space-lg);
+  border-radius: var(--radius-pill);
+  transition: all var(--transition-fast);
+  letter-spacing: 0.04em;
+}
+
+.map-toggle__btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+.map-toggle__btn--active {
+  background: var(--color-primary);
+  color: white;
+}
+
+/* ===== 3D Map ===== */
+.map-3d {
+  position: relative;
+}
+
+.map-3d__no-elevation {
+  position: absolute;
+  bottom: var(--space-xl);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-lg);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.map-3d__legend {
+  position: absolute;
+  right: var(--space-lg);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  z-index: 10;
+}
+
+.map-3d__legend-bar {
+  width: 10px;
+  height: 100px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(to bottom, #EF4444, #F59E0B, #10B981, #3B82F6);
+  box-shadow: var(--shadow-sm);
+}
+
+.map-3d__legend-labels {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+.map-3d__hint {
+  position: absolute;
+  bottom: var(--space-md);
+  left: var(--space-md);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: var(--radius-sm);
+  padding: 3px var(--space-sm);
+  z-index: 10;
+}
+
 /* ===== LanguageSwitcher ===== */
 .language-switcher {
   display: flex;
