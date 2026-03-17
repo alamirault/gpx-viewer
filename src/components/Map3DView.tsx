@@ -3,62 +3,18 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useTranslation } from 'react-i18next';
 import type { GpxPoint } from '../utils/gpxParser';
+import {
+  buildTrackGeoJSON,
+  computeBearing,
+  computeExaggeration,
+} from '../utils/map3dUtils';
 
 // Free terrain DEM tiles (AWS Terrarium, no API key needed)
 const TERRAIN_TILES = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
-// Free OSM raster tiles
-const OSM_TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-
-function elevationColor(t: number): string {
-  if (t < 0.4) {
-    const s = t / 0.4;
-    return lerpColor('#3B82F6', '#10B981', s);
-  } else if (t < 0.7) {
-    const s = (t - 0.4) / 0.3;
-    return lerpColor('#10B981', '#F59E0B', s);
-  } else {
-    const s = (t - 0.7) / 0.3;
-    return lerpColor('#F59E0B', '#EF4444', s);
-  }
-}
-
-function lerpColor(a: string, b: string, t: number): string {
-  const parse = (hex: string) => [
-    parseInt(hex.slice(1, 3), 16),
-    parseInt(hex.slice(3, 5), 16),
-    parseInt(hex.slice(5, 7), 16),
-  ];
-  const [ar, ag, ab] = parse(a);
-  const [br, bg, bb] = parse(b);
-  const r = Math.round(ar! + (br! - ar!) * t);
-  const g = Math.round(ag! + (bg! - ag!) * t);
-  const bl = Math.round(ab! + (bb! - ab!) * t);
-  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${bl.toString(16).padStart(2, '0')}`;
-}
-
-function buildTrackGeoJSON(points: GpxPoint[], eleMin: number, eleMax: number) {
-  const eleRange = eleMax - eleMin || 1;
-  const features = [];
-
-  for (let i = 0; i < points.length - 1; i++) {
-    const p = points[i]!;
-    const q = points[i + 1]!;
-    const t = p.ele !== null ? (p.ele - eleMin) / eleRange : 0.5;
-    features.push({
-      type: 'Feature' as const,
-      properties: { color: elevationColor(t) },
-      geometry: {
-        type: 'LineString' as const,
-        coordinates: [
-          [p.lon, p.lat],
-          [q.lon, q.lat],
-        ],
-      },
-    });
-  }
-
-  return { type: 'FeatureCollection' as const, features };
-}
+// Esri World Imagery — photorealistic satellite (free, no API key)
+const SATELLITE_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+// Esri Reference overlay — labels, peaks, place names
+const LABELS_TILES = 'https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}';
 
 interface Map3DViewProps {
   points: GpxPoint[];
@@ -75,22 +31,44 @@ export default function Map3DView({ points }: Map3DViewProps) {
     const lats = points.map((p) => p.lat);
     const lons = points.map((p) => p.lon);
     const eles = points.map((p) => p.ele ?? 0);
-    const eleMin = Math.min(...eles);
-    const eleMax = Math.max(...eles);
 
-    const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
-    const centerLon = (Math.min(...lons) + Math.max(...lons)) / 2;
+    // Use reduce to avoid stack overflow with large arrays (spread operator fails at ~65k args)
+    const eleMin = eles.reduce((acc, v) => Math.min(acc, v), Infinity);
+    const eleMax = eles.reduce((acc, v) => Math.max(acc, v), -Infinity);
+    const minLat = lats.reduce((acc, v) => Math.min(acc, v), Infinity);
+    const maxLat = lats.reduce((acc, v) => Math.max(acc, v), -Infinity);
+    const minLon = lons.reduce((acc, v) => Math.min(acc, v), Infinity);
+    const maxLon = lons.reduce((acc, v) => Math.max(acc, v), -Infinity);
+
+    const centerLat = (minLat + maxLat) / 2;
+    const centerLon = (minLon + maxLon) / 2;
+
+    const eleRange = eleMax - eleMin;
+    const exaggeration = computeExaggeration(eleRange);
+
+    const firstPoint = points[0]!;
+    const lastPoint = points[points.length - 1]!;
+    const bearing = computeBearing(firstPoint.lat, firstPoint.lon, lastPoint.lat, lastPoint.lon);
+
+    // Guard against load callback firing after map is destroyed
+    let destroyed = false;
 
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: {
         version: 8,
         sources: {
-          osm: {
+          satellite: {
             type: 'raster',
-            tiles: [OSM_TILES],
+            tiles: [SATELLITE_TILES],
             tileSize: 256,
-            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            attribution: '© <a href="https://www.esri.com">Esri</a>, Maxar, Earthstar Geographics',
+            maxzoom: 19,
+          },
+          labels: {
+            type: 'raster',
+            tiles: [LABELS_TILES],
+            tileSize: 256,
             maxzoom: 19,
           },
           'terrain-dem': {
@@ -103,23 +81,28 @@ export default function Map3DView({ points }: Map3DViewProps) {
         },
         layers: [
           {
-            id: 'osm-tiles',
+            id: 'satellite-tiles',
             type: 'raster',
-            source: 'osm',
+            source: 'satellite',
+          },
+          {
+            id: 'labels-tiles',
+            type: 'raster',
+            source: 'labels',
           },
         ],
         sky: {
-          'sky-color': '#87CEEB',
-          'sky-horizon-blend': 0.5,
-          'horizon-color': '#f4f8fb',
-          'horizon-fog-blend': 0.5,
-          'atmosphere-blend': 0.3,
+          'sky-color': '#4DB8E8',
+          'sky-horizon-blend': 0.4,
+          'horizon-color': '#c8e8f4',
+          'horizon-fog-blend': 0.3,
+          'atmosphere-blend': 0.5,
         },
       },
       center: [centerLon, centerLat],
       zoom: 12,
-      pitch: 60,
-      bearing: -15,
+      pitch: 70,
+      bearing,
       antialias: true,
     });
 
@@ -128,10 +111,12 @@ export default function Map3DView({ points }: Map3DViewProps) {
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
 
     map.on('load', () => {
-      // Enable 3D terrain
-      map.setTerrain({ source: 'terrain-dem', exaggeration: 1.5 });
+      if (destroyed) return;
 
-      // Add GPX track
+      // Enable 3D terrain with adaptive exaggeration
+      map.setTerrain({ source: 'terrain-dem', exaggeration });
+
+      // Add GPX track GeoJSON
       const trackGeoJSON = buildTrackGeoJSON(points, eleMin, eleMax);
       map.addSource('track', { type: 'geojson', data: trackGeoJSON });
 
@@ -142,49 +127,52 @@ export default function Map3DView({ points }: Map3DViewProps) {
         source: 'track',
         layout: { 'line-join': 'round', 'line-cap': 'round' },
         paint: {
-          'line-color': 'rgba(0,0,0,0.3)',
-          'line-width': 8,
-          'line-blur': 2,
+          'line-color': 'rgba(0,0,0,0.5)',
+          'line-width': 10,
+          'line-blur': 3,
         },
       });
 
-      // Colored track by elevation
+      // Solid red track — style reference
       map.addLayer({
         id: 'track-line',
         type: 'line',
         source: 'track',
         layout: { 'line-join': 'round', 'line-cap': 'round' },
         paint: {
-          'line-color': ['get', 'color'],
-          'line-width': 4,
+          'line-color': '#FF0000',
+          'line-width': 5,
         },
       });
 
       // Start marker
       const startEl = document.createElement('div');
       startEl.className = 'map-marker map-marker--start';
+      startEl.setAttribute('aria-label', t('map.startPoint'));
       new maplibregl.Marker({ element: startEl })
-        .setLngLat([points[0]!.lon, points[0]!.lat])
+        .setLngLat([firstPoint.lon, firstPoint.lat])
         .addTo(map);
 
       // End marker
       const endEl = document.createElement('div');
       endEl.className = 'map-marker map-marker--end';
+      endEl.setAttribute('aria-label', t('map.endPoint'));
       new maplibregl.Marker({ element: endEl })
-        .setLngLat([points[points.length - 1]!.lon, points[points.length - 1]!.lat])
+        .setLngLat([lastPoint.lon, lastPoint.lat])
         .addTo(map);
 
       // Fit bounds with 3D pitch
       map.fitBounds(
         [
-          [Math.min(...lons), Math.min(...lats)],
-          [Math.max(...lons), Math.max(...lats)],
+          [minLon, minLat],
+          [maxLon, maxLat],
         ],
-        { padding: 60, pitch: 60, bearing: -15, duration: 1200 }
+        { padding: 60, pitch: 70, bearing, duration: 1200 }
       );
     });
 
     return () => {
+      destroyed = true;
       map.remove();
       mapRef.current = null;
     };
@@ -194,17 +182,9 @@ export default function Map3DView({ points }: Map3DViewProps) {
     <div className="map-container map-3d">
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
 
-      {/* Elevation legend */}
-      <div className="map-3d__legend" aria-label="Légende altitude">
-        <div className="map-3d__legend-bar" />
-        <div className="map-3d__legend-labels">
-          <span style={{ color: '#EF4444' }}>Max</span>
-          <span style={{ color: '#10B981' }}>Mid</span>
-          <span style={{ color: '#3B82F6' }}>Min</span>
-        </div>
+      <div className="map-3d__hint">
+        <span aria-hidden="true">🖱</span> {t('map.hint')}
       </div>
-
-      <div className="map-3d__hint">🖱 {t('map.hint')}</div>
     </div>
   );
 }
