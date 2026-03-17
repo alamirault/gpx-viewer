@@ -24,6 +24,7 @@
   align-items: center;
   gap: var(--space-sm);
   min-width: 0;
+  flex: 1;
 }
 
 .header__sep {
@@ -82,6 +83,19 @@
 @media (max-width: 767px) {
   .header {
     padding: 0 var(--space-lg);
+  }
+
+  .header__title {
+    font-size: var(--font-size-md);
+    flex-shrink: 0;
+  }
+
+  .header__track-name {
+    font-size: var(--font-size-sm);
+  }
+
+  .header__change-btn {
+    display: none;
   }
 }
 
