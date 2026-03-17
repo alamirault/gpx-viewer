@@ -1,19 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import type { GpxMetrics } from '../utils/gpxParser';
 
-function formatDuration(seconds: number | null): string | null {
-  if (seconds == null) return null;
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.floor(seconds % 60);
-  return `${h}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`;
-}
-
-function formatSpeed(mps: number | null): string | null {
-  if (mps == null) return null;
-  return (mps * 3.6).toFixed(1);
-}
-
 interface MetricsPanelProps {
   metrics: GpxMetrics;
 }
@@ -45,28 +32,6 @@ export default function MetricsPanel({ metrics }: MetricsPanelProps) {
     {
       label: t('metrics.eleMax'),
       value: metrics.eleMax != null ? `${Math.round(metrics.eleMax)} ${t('units.m')}` : na,
-    },
-    {
-      label: t('metrics.eleAvg'),
-      value: metrics.eleAvg != null ? `${Math.round(metrics.eleAvg)} ${t('units.m')}` : na,
-    },
-    {
-      label: t('metrics.duration'),
-      value: formatDuration(metrics.duration) ?? na,
-    },
-    {
-      label: t('metrics.avgSpeed'),
-      value:
-        metrics.avgSpeed != null
-          ? `${formatSpeed(metrics.avgSpeed)} ${t('units.kmh')}`
-          : na,
-    },
-    {
-      label: t('metrics.maxSpeed'),
-      value:
-        metrics.maxSpeed != null
-          ? `${formatSpeed(metrics.maxSpeed)} ${t('units.kmh')}`
-          : na,
     },
   ];
 
