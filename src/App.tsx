@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import faviconUrl from '/favicon.svg';
 import { parseGPX } from './utils/gpxParser';
 import type { GpxData } from './utils/gpxParser';
 
@@ -140,7 +141,7 @@ export default function App() {
       {isDragging && gpxData && (
         <div className="drop-overlay" aria-live="polite">
           <div className="drop-overlay__inner">
-            <img className="drop-overlay__icon" src="/favicon.svg" alt="" aria-hidden="true" />
+            <img className="drop-overlay__icon" src={faviconUrl} alt="" aria-hidden="true" />
             <p className="drop-overlay__title">{t('dropzone.dropOverlay')}</p>
           </div>
         </div>

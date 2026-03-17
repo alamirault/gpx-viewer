@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import faviconUrl from '/favicon.svg';
 
 interface DropZoneProps {
   onFileLoad: (gpxString: string, fileName: string) => void;
@@ -74,7 +75,7 @@ export default function DropZone({ onFileLoad }: DropZoneProps) {
         onChange={onChange}
         style={{ display: 'none' }}
       />
-      <img className="dropzone__icon" src="/favicon.svg" alt="" aria-hidden="true" />
+      <img className="dropzone__icon" src={faviconUrl} alt="" aria-hidden="true" />
       <p className="dropzone__title">{t('dropzone.title')}</p>
       <p className="dropzone__subtitle">{t('dropzone.subtitle')}</p>
       {error && <p className="dropzone__error">{error}</p>}
