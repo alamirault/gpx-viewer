@@ -4,6 +4,12 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { GpxPoint } from '../utils/gpxParser';
 
+const hoverIcon = L.divIcon({
+  className: 'map-hover-marker',
+  iconSize: [14, 14],
+  iconAnchor: [7, 7],
+});
+
 // Fix default marker icon issue with bundlers
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -31,6 +37,16 @@ const endIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
+function ZoomControl() {
+  const map = useMap();
+  useEffect(() => {
+    const ctrl = L.control.zoom({ position: 'topright' });
+    ctrl.addTo(map);
+    return () => { ctrl.remove(); };
+  }, [map]);
+  return null;
+}
+
 function FitBounds({ points }: { points: GpxPoint[] }) {
   const map = useMap();
   const fitted = useRef(false);
@@ -46,11 +62,32 @@ function FitBounds({ points }: { points: GpxPoint[] }) {
   return null;
 }
 
-interface MapViewProps {
-  points: GpxPoint[];
+function HoverMarker({ point }: { point: { lat: number; lon: number } | null }) {
+  const map = useMap();
+  const markerRef = useRef<L.Marker | null>(null);
+
+  useEffect(() => {
+    if (point) {
+      if (!markerRef.current) {
+        markerRef.current = L.marker([point.lat, point.lon], { icon: hoverIcon, interactive: false }).addTo(map);
+      } else {
+        markerRef.current.setLatLng([point.lat, point.lon]);
+      }
+    } else {
+      markerRef.current?.remove();
+      markerRef.current = null;
+    }
+  }, [point, map]);
+
+  return null;
 }
 
-export default function MapView({ points }: MapViewProps) {
+interface MapViewProps {
+  points: GpxPoint[];
+  hoverPoint: { lat: number; lon: number } | null;
+}
+
+export default function MapView({ points, hoverPoint }: MapViewProps) {
   const positions = points.map((p) => [p.lat, p.lon] as L.LatLngTuple);
   const start = positions[0]!;
   const end = positions[positions.length - 1]!;
@@ -62,6 +99,7 @@ export default function MapView({ points }: MapViewProps) {
         zoom={13}
         style={{ height: '100%', width: '100%' }}
         scrollWheelZoom={true}
+        zoomControl={false}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -70,7 +108,9 @@ export default function MapView({ points }: MapViewProps) {
         <Polyline positions={positions} color="#2E7D5B" weight={4} />
         <Marker position={start} icon={startIcon} />
         <Marker position={end} icon={endIcon} />
+        <ZoomControl />
         <FitBounds points={points} />
+        <HoverMarker point={hoverPoint} />
       </MapContainer>
     </div>
   );

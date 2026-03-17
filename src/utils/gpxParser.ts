@@ -8,6 +8,8 @@ export interface GpxPoint {
 export interface ChartDataPoint {
   distance: number;
   elevation: number | null;
+  lat: number;
+  lon: number;
 }
 
 export interface GpxMetrics {
@@ -129,6 +131,8 @@ export function parseGPX(gpxString: string): GpxData {
   const chartData: ChartDataPoint[] = points.map((p, i) => ({
     distance: distances[i]! / 1000,
     elevation: p.ele,
+    lat: p.lat,
+    lon: p.lon,
   }));
 
   return {

@@ -8,22 +8,37 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import type { CategoricalChartState } from 'recharts/types/chart/generateCategoricalChart';
 import type { ChartDataPoint } from '../utils/gpxParser';
 
 interface ElevationChartProps {
   chartData: ChartDataPoint[];
+  onHover?: (point: { lat: number; lon: number } | null) => void;
 }
 
-export default function ElevationChart({ chartData }: ElevationChartProps) {
+export default function ElevationChart({ chartData, onHover }: ElevationChartProps) {
   const { t } = useTranslation();
 
   const filteredData = chartData.filter((d) => d.elevation !== null);
   if (filteredData.length === 0) return null;
 
+  const handleMouseMove = (state: CategoricalChartState) => {
+    if (!onHover) return;
+    const point = state.activePayload?.[0]?.payload as ChartDataPoint | undefined;
+    if (point) onHover({ lat: point.lat, lon: point.lon });
+  };
+
+  const handleMouseLeave = () => onHover?.(null);
+
   return (
     <div className="elevation-chart">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={filteredData} margin={{ top: 10, right: 20, left: 10, bottom: 20 }}>
+        <AreaChart
+          data={filteredData}
+          margin={{ top: 10, right: 20, left: 10, bottom: 20 }}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+        >
           <defs>
             <linearGradient id="elevGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#4CAF82" stopOpacity={0.6} />

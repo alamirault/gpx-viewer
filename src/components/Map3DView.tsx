@@ -22,9 +22,10 @@ type ViewMode = 'satellite' | 'terrain';
 
 interface Map3DViewProps {
   points: GpxPoint[];
+  hoverPoint: { lat: number; lon: number } | null;
 }
 
-export default function Map3DView({ points }: Map3DViewProps) {
+export default function Map3DView({ points, hoverPoint }: Map3DViewProps) {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -34,6 +35,28 @@ export default function Map3DView({ points }: Map3DViewProps) {
   const viewModeRef = useRef<ViewMode>('satellite');
   // Store initial camera state for the reset button
   const initialCameraRef = useRef<{ bearing: number; pitch: number; bounds: [[number, number], [number, number]] } | null>(null);
+  // Hover marker from elevation chart
+  const hoverMarkerRef = useRef<maplibregl.Marker | null>(null);
+
+  // Update hover marker position when chart is hovered
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapLoadedRef.current) return;
+    if (hoverPoint) {
+      if (!hoverMarkerRef.current) {
+        const el = document.createElement('div');
+        el.className = 'map-hover-marker';
+        hoverMarkerRef.current = new maplibregl.Marker({ element: el, anchor: 'center' })
+          .setLngLat([hoverPoint.lon, hoverPoint.lat])
+          .addTo(map);
+      } else {
+        hoverMarkerRef.current.setLngLat([hoverPoint.lon, hoverPoint.lat]);
+      }
+    } else {
+      hoverMarkerRef.current?.remove();
+      hoverMarkerRef.current = null;
+    }
+  }, [hoverPoint]);
 
   // Sync ref and toggle layer visibility when viewMode changes
   useEffect(() => {
@@ -260,6 +283,8 @@ export default function Map3DView({ points }: Map3DViewProps) {
     return () => {
       destroyed = true;
       mapLoadedRef.current = false;
+      hoverMarkerRef.current?.remove();
+      hoverMarkerRef.current = null;
       canvas.removeEventListener('mousedown', onMouseDown);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);

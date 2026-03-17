@@ -248,6 +248,17 @@
   color: white;
 }
 
+/* ===== Hover marker (shared 2D + 3D) ===== */
+.map-hover-marker {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #FF0000;
+  box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.25), 0 2px 6px rgba(0,0,0,0.3);
+  pointer-events: none;
+}
+
 /* ===== MapLibre marker overrides ===== */
 .map-marker {
   width: 14px;

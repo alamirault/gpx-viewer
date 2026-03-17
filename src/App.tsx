@@ -15,6 +15,7 @@ export default function App() {
   const [gpxData, setGpxData] = useState<GpxData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [is3D, setIs3D] = useState(false);
+  const [hoverPoint, setHoverPoint] = useState<{ lat: number; lon: number } | null>(null);
 
   const handleFileLoad = (gpxString: string) => {
     try {
@@ -77,14 +78,14 @@ export default function App() {
                 </button>
               </div>
               {is3D ? (
-                <Map3DView points={gpxData.points} />
+                <Map3DView points={gpxData.points} hoverPoint={hoverPoint} />
               ) : (
-                <MapView points={gpxData.points} />
+                <MapView points={gpxData.points} hoverPoint={hoverPoint} />
               )}
             </div>
             <div className="content__sidebar">
               <MetricsPanel metrics={gpxData.metrics} />
-              <ElevationChart chartData={gpxData.chartData} />
+              <ElevationChart chartData={gpxData.chartData} onHover={setHoverPoint} />
             </div>
           </div>
         )}
