@@ -1,0 +1,61 @@
+:root {
+  /* Colors */
+  --color-primary: #2E7D5B;
+  --color-primary-light: #4CAF82;
+  --color-primary-dark: #1B5E3B;
+  --color-bg: #F7F9F8;
+  --color-surface: #FFFFFF;
+  --color-text: #1A2B23;
+  --color-text-secondary: #5A6B63;
+  --color-border: #D4DDD8;
+  --color-accent: #E8735A;
+  --color-dropzone-bg: #EAF5F0;
+
+  /* Typography */
+  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-base: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+  --space-3xl: 40px;
+
+  /* Breakpoints (for reference, used in media queries) */
+  /* --bp-mobile: 767px */
+  /* --bp-tablet: 1279px */
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  /* Border radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 20px;
+
+  /* Z-index */
+  --z-header: 100;
+  --z-dropzone: 10;
+  --z-map: 1;
+
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+
+  /* Layout */
+  --header-height: 56px;
+}

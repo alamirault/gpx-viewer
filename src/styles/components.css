@@ -1,0 +1,217 @@
+/* ===== Header ===== */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--header-height);
+  padding: 0 var(--space-xl);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
+  z-index: var(--z-header);
+}
+
+.header__title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  margin: 0;
+}
+
+.header__title:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+@media (max-width: 767px) {
+  .header {
+    padding: 0 var(--space-lg);
+  }
+}
+
+/* ===== DropZone ===== */
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  margin: var(--space-3xl);
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-dropzone-bg);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  outline: none;
+  z-index: var(--z-dropzone);
+}
+
+.dropzone:hover,
+.dropzone--active {
+  border-color: var(--color-primary);
+  background: #ddf0e6;
+}
+
+.dropzone--active {
+  border-style: solid;
+}
+
+.dropzone:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.dropzone__icon {
+  font-size: 48px;
+  margin-bottom: var(--space-lg);
+}
+
+.dropzone__title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  margin-bottom: var(--space-sm);
+}
+
+.dropzone__subtitle {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+}
+
+.dropzone__error {
+  margin-top: var(--space-md);
+  color: var(--color-accent);
+  font-weight: var(--font-weight-medium);
+}
+
+@media (max-width: 767px) {
+  .dropzone {
+    margin: var(--space-xl);
+  }
+}
+
+/* ===== MapView ===== */
+.map-container {
+  height: 100%;
+  width: 100%;
+  z-index: var(--z-map);
+}
+
+/* ===== ElevationChart ===== */
+.elevation-chart {
+  flex: 1;
+  min-height: 200px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+}
+
+@media (max-width: 1279px) {
+  .elevation-chart {
+    min-height: 250px;
+  }
+}
+
+@media (max-width: 767px) {
+  .elevation-chart {
+    min-height: 200px;
+  }
+}
+
+/* ===== MetricsPanel ===== */
+.metrics-panel {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+}
+
+.metric-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+}
+
+.metric-card__label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.metric-card__value {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+@media (max-width: 1279px) {
+  .metrics-panel {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .metrics-panel {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 374px) {
+  .metrics-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .dropzone {
+    margin: var(--space-md);
+  }
+
+  .header__title {
+    font-size: var(--font-size-md);
+  }
+}
+
+/* ===== LanguageSwitcher ===== */
+.language-switcher {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: var(--color-bg);
+  border-radius: var(--radius-pill);
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.language-switcher__btn {
+  background: none;
+  border: none;
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: var(--space-xs) 10px;
+  border-radius: 14px;
+  transition: all var(--transition-fast);
+}
+
+.language-switcher__btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+.language-switcher__btn--active {
+  background: var(--color-primary);
+  color: white;
+}
+
+.language-switcher__sep {
+  color: var(--color-border);
+  font-size: var(--font-size-sm);
+}

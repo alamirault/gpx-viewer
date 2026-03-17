@@ -1,0 +1,99 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+@import './variables.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* App layout */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.main {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Content layout: desktop = row 60/40, tablet/mobile = column */
+.content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.content__map {
+  flex: 0 0 60%;
+  min-height: 0;
+}
+
+.content__sidebar {
+  flex: 0 0 40%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: var(--space-lg);
+  gap: var(--space-lg);
+}
+
+/* Tablet */
+@media (max-width: 1279px) {
+  .content {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .content__map {
+    flex: 0 0 50vh;
+  }
+
+  .content__sidebar {
+    flex: 1;
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .content__map {
+    flex: 0 0 40vh;
+  }
+
+  .content__sidebar {
+    padding: var(--space-md);
+  }
+}
+
+/* Error banner */
+.error-banner {
+  background: #fef2f0;
+  color: var(--color-accent);
+  padding: var(--space-md) var(--space-xl);
+  text-align: center;
+  font-weight: var(--font-weight-medium);
+  border-bottom: 1px solid var(--color-accent);
+  flex-shrink: 0;
+}

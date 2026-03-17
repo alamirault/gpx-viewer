@@ -1,0 +1,29 @@
+{
+  "appName": "GPX Viewer",
+  "dropzone": {
+    "title": "Déposez votre fichier GPX ici",
+    "subtitle": "ou cliquez pour parcourir",
+    "invalidFile": "Veuillez sélectionner un fichier .gpx valide"
+  },
+  "metrics": {
+    "distance": "Distance",
+    "elevGain": "Dénivelé +",
+    "elevLoss": "Dénivelé -",
+    "eleMin": "Altitude min",
+    "eleMax": "Altitude max",
+    "eleAvg": "Altitude moy",
+    "duration": "Durée",
+    "avgSpeed": "Vitesse moy",
+    "maxSpeed": "Vitesse max"
+  },
+  "units": {
+    "km": "km",
+    "m": "m",
+    "kmh": "km/h"
+  },
+  "chart": {
+    "distance": "Distance (km)",
+    "elevation": "Altitude (m)"
+  },
+  "na": "N/A"
+}

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <name>Flat Track</name>
+    <trkseg>
+      <trkpt lat="48.856" lon="2.352">
+      </trkpt>
+      <trkpt lat="48.857" lon="2.353">
+      </trkpt>
+      <trkpt lat="48.858" lon="2.354">
+      </trkpt>
+    </trkseg>
+  </trk>
+</gpx>
