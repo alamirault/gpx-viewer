@@ -9,7 +9,7 @@ import {
   ResponsiveContainer,
   Customized,
 } from 'recharts';
-import type { CategoricalChartState } from 'recharts/types/chart/generateCategoricalChart';
+import type { CategoricalChartState } from 'recharts/types/chart/types';
 import type { ChartDataPoint } from '../utils/gpxParser';
 
 interface ElevationChartProps {

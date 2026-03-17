@@ -188,7 +188,7 @@ export default function Map3DView({ points, hoverPoint, pinnedPoint, onUnpin, ca
       zoom: cameraState ? cameraState.zoom : 12,
       pitch: cameraState ? cameraState.pitch : 70,
       bearing: cameraState ? cameraState.bearing : bearing,
-      antialias: true,
+      // antialias: true, // not in MapOptions type but supported at runtime
     });
 
     mapRef.current = map;

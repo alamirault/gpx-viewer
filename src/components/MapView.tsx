@@ -201,7 +201,6 @@ interface MapViewProps {
 }
 
 export default function MapView({ points, hoverPoint, pinnedPoint, onUnpin, cameraState, onCameraChange, onMapHover }: MapViewProps) {
-  const { t } = useTranslation();
   const [colorMode, setColorMode] = useState<'red' | 'elevation'>('red');
 
   const positions = points.map((p) => [p.lat, p.lon] as L.LatLngTuple);
