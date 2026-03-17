@@ -1,16 +1,41 @@
-# React + Vite
+# 🗺️ GPX Viewer
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Visualiseur interactif de traces GPX avec carte 2D/3D, profil d'altitude et métriques.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+> [!CAUTION]
+> **Projet 100% vibe coded.**
+> Aucun fichier de ce projet n'a été relu par un humain.
+> Le code est généré intégralement par IA (Claude) sans revue manuelle.
+> Utiliser à vos risques et périls.
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Fonctionnalités
 
-## Expanding the ESLint configuration
+- Import de fichier GPX par drag & drop ou sélection
+- Carte 2D (Leaflet / OpenStreetMap) avec bascule Tracé / Dénivelé
+- Carte 3D (MapLibre GL) avec relief 3D, satellite et terrain topographique
+- Profil d'altitude interactif (Recharts)
+- Hover bidirectionnel : survol carte ↔ indicateur sur le graphe
+- Métriques : distance, dénivelé +/−, altitude min/moy/max, durée, vitesse moy/max
+- Persistance de la dernière trace entre les sessions (localStorage)
+- Interface bilingue 🇫🇷 / 🇬🇧
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Stack
+
+- [React](https://react.dev) + [TypeScript](https://www.typescriptlang.org) + [Vite](https://vitejs.dev)
+- Carte 2D : [Leaflet](https://leafletjs.com) / [react-leaflet](https://react-leaflet.js.org)
+- Carte 3D : [MapLibre GL JS](https://maplibre.org)
+- Graphe : [Recharts](https://recharts.org)
+- i18n : [i18next](https://www.i18next.com)
+- Tuiles : [OpenStreetMap](https://www.openstreetmap.org) · [OpenTopoMap](https://opentopomap.org) · [ESRI Satellite](https://www.esri.com)
+- Terrain DEM : [AWS Terrain Tiles](https://registry.opendata.aws/terrain-tiles)
+
+## Lancer en local
+
+```bash
+npm install
+npm run dev
+```
