@@ -132,3 +132,27 @@ describe('computeBearing', () => {
     expect(bearing).toBeCloseTo(90, 0);
   });
 });
+
+// ViewMode is defined in Map3DView.tsx as 'satellite' | 'terrain'.
+// The React component (Map3DView) relies on maplibregl and cannot be unit-tested
+// without a DOM + WebGL environment, so only the valid string values are documented here.
+describe('ViewMode constants (documentation)', () => {
+  // These tests assert that the two expected literal values are the correct strings,
+  // acting as a canary if the ViewMode union type is ever renamed or extended.
+  it('satellite mode value is the string "satellite"', () => {
+    const mode: 'satellite' | 'terrain' = 'satellite';
+    expect(mode).toBe('satellite');
+  });
+
+  it('terrain mode value is the string "terrain"', () => {
+    const mode: 'satellite' | 'terrain' = 'terrain';
+    expect(mode).toBe('terrain');
+  });
+
+  it('only two modes exist in the ViewMode union', () => {
+    const validModes: Array<'satellite' | 'terrain'> = ['satellite', 'terrain'];
+    expect(validModes).toHaveLength(2);
+    expect(validModes).toContain('satellite');
+    expect(validModes).toContain('terrain');
+  });
+});

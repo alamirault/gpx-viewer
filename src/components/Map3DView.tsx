@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +15,10 @@ const TERRAIN_TILES = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{
 const SATELLITE_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
 // Esri Reference overlay — labels, peaks, place names
 const LABELS_TILES = 'https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}';
+// Esri World Terrain Base — hypsometric tinting (green → brown → grey by elevation)
+const TERRAIN_VISUAL_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}';
+
+type ViewMode = 'satellite' | 'terrain';
 
 interface Map3DViewProps {
   points: GpxPoint[];
@@ -24,6 +28,21 @@ export default function Map3DView({ points }: Map3DViewProps) {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
+  const mapLoadedRef = useRef(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('satellite');
+  // Ref to avoid stale closure in map.on('load') callback
+  const viewModeRef = useRef<ViewMode>('satellite');
+
+  // Sync ref and toggle layer visibility when viewMode changes
+  useEffect(() => {
+    viewModeRef.current = viewMode;
+    const map = mapRef.current;
+    if (!map || !mapLoadedRef.current) return;
+    const isSat = viewMode === 'satellite';
+    map.setLayoutProperty('satellite-tiles', 'visibility', isSat ? 'visible' : 'none');
+    map.setLayoutProperty('labels-tiles', 'visibility', isSat ? 'visible' : 'none');
+    map.setLayoutProperty('terrain-visual-tiles', 'visibility', isSat ? 'none' : 'visible');
+  }, [viewMode]);
 
   useEffect(() => {
     if (!containerRef.current || points.length === 0) return;
@@ -71,6 +90,13 @@ export default function Map3DView({ points }: Map3DViewProps) {
             tileSize: 256,
             maxzoom: 19,
           },
+          'terrain-visual': {
+            type: 'raster',
+            tiles: [TERRAIN_VISUAL_TILES],
+            tileSize: 256,
+            attribution: '© <a href="https://www.esri.com">Esri</a>',
+            maxzoom: 13,
+          },
           'terrain-dem': {
             type: 'raster-dem',
             tiles: [TERRAIN_TILES],
@@ -84,11 +110,19 @@ export default function Map3DView({ points }: Map3DViewProps) {
             id: 'satellite-tiles',
             type: 'raster',
             source: 'satellite',
+            layout: { visibility: 'visible' },
           },
           {
             id: 'labels-tiles',
             type: 'raster',
             source: 'labels',
+            layout: { visibility: 'visible' },
+          },
+          {
+            id: 'terrain-visual-tiles',
+            type: 'raster',
+            source: 'terrain-visual',
+            layout: { visibility: 'none' },
           },
         ],
         sky: {
@@ -115,6 +149,16 @@ export default function Map3DView({ points }: Map3DViewProps) {
 
       // Enable 3D terrain with adaptive exaggeration
       map.setTerrain({ source: 'terrain-dem', exaggeration });
+
+      // Apply viewMode that may have been set before map finished loading
+      const isSat = viewModeRef.current === 'satellite';
+      if (!isSat) {
+        map.setLayoutProperty('satellite-tiles', 'visibility', 'none');
+        map.setLayoutProperty('labels-tiles', 'visibility', 'none');
+        map.setLayoutProperty('terrain-visual-tiles', 'visibility', 'visible');
+      }
+
+      mapLoadedRef.current = true;
 
       // Add GPX track GeoJSON
       const trackGeoJSON = buildTrackGeoJSON(points, eleMin, eleMax);
@@ -173,6 +217,7 @@ export default function Map3DView({ points }: Map3DViewProps) {
 
     return () => {
       destroyed = true;
+      mapLoadedRef.current = false;
       map.remove();
       mapRef.current = null;
     };
@@ -181,6 +226,23 @@ export default function Map3DView({ points }: Map3DViewProps) {
   return (
     <div className="map-container map-3d">
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+
+      <div className="map-3d__mode-toggle" role="group" aria-label={t('map.viewMode')}>
+        <button
+          className={`map-3d__mode-btn${viewMode === 'satellite' ? ' map-3d__mode-btn--active' : ''}`}
+          onClick={() => setViewMode('satellite')}
+          aria-pressed={viewMode === 'satellite'}
+        >
+          {t('map.modeSatellite')}
+        </button>
+        <button
+          className={`map-3d__mode-btn${viewMode === 'terrain' ? ' map-3d__mode-btn--active' : ''}`}
+          onClick={() => setViewMode('terrain')}
+          aria-pressed={viewMode === 'terrain'}
+        >
+          {t('map.modeTerrain')}
+        </button>
+      </div>
 
       <div className="map-3d__hint">
         <span aria-hidden="true">🖱</span> {t('map.hint')}
