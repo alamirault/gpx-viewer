@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseGPX } from './utils/gpxParser';
 import type { GpxData } from './utils/gpxParser';
@@ -27,6 +27,10 @@ export default function App() {
   // Separate camera state per view so zoom mismatch between pitched 3D and flat 2D is avoided
   const [camera2D, setCamera2D] = useState<CameraState | null>(null);
   const [camera3D, setCamera3D] = useState<CameraState | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [mapKey, setMapKey] = useState(0);
+  const dragCounter = useRef(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Restore last GPX from localStorage on first load
   useEffect(() => {
@@ -47,11 +51,49 @@ export default function App() {
       setCamera2D(null);
       setCamera3D(null);
       setPinnedPoint(null);
+      setMapKey((k) => k + 1);
       setGpxData(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       setGpxData(null);
     }
+  };
+
+  const handleFilePick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => handleFileLoad(ev.target?.result as string);
+    reader.readAsText(file);
+    // Reset input so same file can be re-selected
+    e.target.value = '';
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current += 1;
+    if (dragCounter.current === 1) setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current -= 1;
+    if (dragCounter.current === 0) setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current = 0;
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => handleFileLoad(ev.target?.result as string);
+    reader.readAsText(file);
   };
 
   const handleReset = () => {
@@ -65,7 +107,30 @@ export default function App() {
   };
 
   return (
-    <div className="app">
+    <div
+      className="app"
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      {isDragging && gpxData && (
+        <div className="drop-overlay" aria-live="polite">
+          <div className="drop-overlay__inner">
+            <div className="drop-overlay__icon">&#128506;</div>
+            <p className="drop-overlay__title">{t('dropzone.dropOverlay')}</p>
+          </div>
+        </div>
+      )}
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".gpx"
+        style={{ display: 'none' }}
+        onChange={handleFilePick}
+      />
+
       <header className="header">
         <div className="header__left">
           <h1
@@ -80,7 +145,17 @@ export default function App() {
             {t('appName')}
           </h1>
         </div>
-        <LanguageSwitcher />
+        <div className="header__right">
+          {gpxData && (
+            <button
+              className="header__change-btn"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {t('dropzone.changeFile')}
+            </button>
+          )}
+          <LanguageSwitcher />
+        </div>
       </header>
 
       <main className="main">
@@ -108,9 +183,9 @@ export default function App() {
                 </button>
               </div>
               {is3D ? (
-                <Map3DView points={gpxData.points} hoverPoint={hoverPoint} pinnedPoint={pinnedPoint} onUnpin={() => setPinnedPoint(null)} cameraState={camera3D} onCameraChange={setCamera3D} />
+                <Map3DView key={mapKey} points={gpxData.points} hoverPoint={hoverPoint} pinnedPoint={pinnedPoint} onUnpin={() => setPinnedPoint(null)} cameraState={camera3D} onCameraChange={setCamera3D} />
               ) : (
-                <MapView points={gpxData.points} hoverPoint={hoverPoint} pinnedPoint={pinnedPoint} onUnpin={() => setPinnedPoint(null)} cameraState={camera2D} onCameraChange={setCamera2D} />
+                <MapView key={mapKey} points={gpxData.points} hoverPoint={hoverPoint} pinnedPoint={pinnedPoint} onUnpin={() => setPinnedPoint(null)} cameraState={camera2D} onCameraChange={setCamera2D} />
               )}
             </div>
             <div className="content__sidebar">

@@ -3,7 +3,9 @@
   "dropzone": {
     "title": "Déposez votre fichier GPX ici",
     "subtitle": "ou cliquez pour parcourir",
-    "invalidFile": "Veuillez sélectionner un fichier .gpx valide"
+    "invalidFile": "Veuillez sélectionner un fichier .gpx valide",
+    "changeFile": "Changer de fichier",
+    "dropOverlay": "Déposez votre fichier GPX"
   },
   "metrics": {
     "distance": "Distance",
