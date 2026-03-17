@@ -108,9 +108,9 @@ export default function App() {
                 </button>
               </div>
               {is3D ? (
-                <Map3DView points={gpxData.points} hoverPoint={hoverPoint} pinnedPoint={pinnedPoint} cameraState={camera3D} onCameraChange={setCamera3D} />
+                <Map3DView points={gpxData.points} hoverPoint={hoverPoint} pinnedPoint={pinnedPoint} onUnpin={() => setPinnedPoint(null)} cameraState={camera3D} onCameraChange={setCamera3D} />
               ) : (
-                <MapView points={gpxData.points} hoverPoint={hoverPoint} pinnedPoint={pinnedPoint} cameraState={camera2D} onCameraChange={setCamera2D} />
+                <MapView points={gpxData.points} hoverPoint={hoverPoint} pinnedPoint={pinnedPoint} onUnpin={() => setPinnedPoint(null)} cameraState={camera2D} onCameraChange={setCamera2D} />
               )}
             </div>
             <div className="content__sidebar">

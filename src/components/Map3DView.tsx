@@ -25,11 +25,12 @@ interface Map3DViewProps {
   points: GpxPoint[];
   hoverPoint: { lat: number; lon: number } | null;
   pinnedPoint: { lat: number; lon: number } | null;
+  onUnpin: () => void;
   cameraState: CameraState | null;
   onCameraChange: (c: CameraState) => void;
 }
 
-export default function Map3DView({ points, hoverPoint, pinnedPoint, cameraState, onCameraChange }: Map3DViewProps) {
+export default function Map3DView({ points, hoverPoint, pinnedPoint, onUnpin, cameraState, onCameraChange }: Map3DViewProps) {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -73,6 +74,7 @@ export default function Map3DView({ points, hoverPoint, pinnedPoint, cameraState
     if (pinnedPoint) {
       const el = document.createElement('div');
       el.className = 'map-pin-marker';
+      el.addEventListener('click', (e) => { e.stopPropagation(); onUnpin(); });
       pinnedMarkerRef.current = new maplibregl.Marker({ element: el, anchor: 'center' })
         .setLngLat([pinnedPoint.lon, pinnedPoint.lat])
         .addTo(map);
