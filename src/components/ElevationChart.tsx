@@ -7,20 +7,29 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Customized,
 } from 'recharts';
 import type { CategoricalChartState } from 'recharts/types/chart/generateCategoricalChart';
 import type { ChartDataPoint } from '../utils/gpxParser';
 
 interface ElevationChartProps {
   chartData: ChartDataPoint[];
+  mapHoverDistance?: number | null;
   onHover?: (point: { lat: number; lon: number } | null) => void;
   onPin?: (point: { lat: number; lon: number }) => void;
 }
 
-export default function ElevationChart({ chartData, onHover, onPin }: ElevationChartProps) {
+export default function ElevationChart({ chartData, mapHoverDistance, onHover, onPin }: ElevationChartProps) {
   const { t, i18n } = useTranslation();
 
   const filteredData = chartData.filter((d) => d.elevation !== null);
+
+  // Find nearest data point to the map-hover distance
+  const mapHoverPoint = mapHoverDistance != null && filteredData.length > 0
+    ? filteredData.reduce((prev, curr) =>
+        Math.abs(curr.distance - mapHoverDistance) < Math.abs(prev.distance - mapHoverDistance) ? curr : prev
+      )
+    : null;
   if (filteredData.length === 0) return null;
 
   const getPayloadPoint = (state: CategoricalChartState) =>
@@ -77,6 +86,22 @@ export default function ElevationChart({ chartData, onHover, onPin }: ElevationC
             strokeWidth={2}
             fill="url(#elevGradient)"
           />
+          <Customized component={({ xAxisMap, yAxisMap, margin, height }: Record<string, any>) => {
+            if (!mapHoverPoint || !xAxisMap || !yAxisMap) return null;
+            const xScale = (Object.values(xAxisMap)[0] as any)?.scale;
+            const yScale = (Object.values(yAxisMap)[0] as any)?.scale;
+            if (!xScale || !yScale) return null;
+            const x = xScale(mapHoverPoint.distance);
+            const y = yScale(mapHoverPoint.elevation);
+            const top = margin?.top ?? 10;
+            const bottom = (height as number) - (margin?.bottom ?? 20);
+            return (
+              <g>
+                <line x1={x} y1={top} x2={x} y2={bottom} stroke="#2E7D5B" strokeOpacity={0.45} strokeDasharray="4 3" strokeWidth={1.5} />
+                <circle cx={x} cy={y} r={4} fill="#2E7D5B" stroke="white" strokeWidth={2} />
+              </g>
+            );
+          }} />
         </AreaChart>
       </ResponsiveContainer>
     </div>

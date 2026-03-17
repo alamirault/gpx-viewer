@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface DropZoneProps {
-  onFileLoad: (gpxString: string) => void;
+  onFileLoad: (gpxString: string, fileName: string) => void;
 }
 
 export default function DropZone({ onFileLoad }: DropZoneProps) {
@@ -19,7 +19,7 @@ export default function DropZone({ onFileLoad }: DropZoneProps) {
         return;
       }
       const reader = new FileReader();
-      reader.onload = (e) => onFileLoad(e.target?.result as string);
+      reader.onload = (e) => onFileLoad(e.target?.result as string, file.name.replace(/\.gpx$/i, ''));
       reader.readAsText(file);
     },
     [onFileLoad, t]

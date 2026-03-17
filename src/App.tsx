@@ -23,10 +23,12 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [is3D, setIs3D] = useState(false);
   const [hoverPoint, setHoverPoint] = useState<{ lat: number; lon: number } | null>(null);
+  const [mapHoverDistance, setMapHoverDistance] = useState<number | null>(null);
   const [pinnedPoint, setPinnedPoint] = useState<{ lat: number; lon: number } | null>(null);
   // Separate camera state per view so zoom mismatch between pitched 3D and flat 2D is avoided
   const [camera2D, setCamera2D] = useState<CameraState | null>(null);
   const [camera3D, setCamera3D] = useState<CameraState | null>(null);
+  const [trackName, setTrackName] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [mapKey, setMapKey] = useState(0);
   const dragCounter = useRef(0);
@@ -37,17 +39,21 @@ export default function App() {
     const saved = localStorage.getItem('gpx-last');
     if (!saved) return;
     try {
-      setGpxData(parseGPX(saved));
+      const data = parseGPX(saved);
+      setGpxData(data);
+      setTrackName(localStorage.getItem('gpx-name') || data.name);
     } catch {
       localStorage.removeItem('gpx-last');
     }
   }, []);
 
-  const handleFileLoad = (gpxString: string) => {
+  const handleFileLoad = (gpxString: string, fileName = '') => {
     try {
       setError(null);
       const data = parseGPX(gpxString);
+      setTrackName(data.name ?? (fileName || null));
       localStorage.setItem('gpx-last', gpxString);
+      localStorage.setItem('gpx-name', data.name ?? fileName ?? '');
       setCamera2D(null);
       setCamera3D(null);
       setPinnedPoint(null);
@@ -63,10 +69,25 @@ export default function App() {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => handleFileLoad(ev.target?.result as string);
+    reader.onload = (ev) => handleFileLoad(ev.target?.result as string, file.name.replace(/\.gpx$/i, ''));
     reader.readAsText(file);
-    // Reset input so same file can be re-selected
     e.target.value = '';
+  };
+
+  const handleMapHover = (point: { lat: number; lon: number } | null) => {
+    if (!point || !gpxData) {
+      setMapHoverDistance(null);
+      setHoverPoint(null);
+      return;
+    }
+    let minDist = Infinity;
+    let nearest = gpxData.chartData[0]!;
+    for (const p of gpxData.chartData) {
+      const d = (p.lat - point.lat) ** 2 + (p.lon - point.lon) ** 2;
+      if (d < minDist) { minDist = d; nearest = p; }
+    }
+    setMapHoverDistance(nearest.distance);
+    setHoverPoint({ lat: nearest.lat, lon: nearest.lon });
   };
 
   const handleDragEnter = (e: React.DragEvent) => {
@@ -92,13 +113,15 @@ export default function App() {
     const file = e.dataTransfer.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => handleFileLoad(ev.target?.result as string);
+    reader.onload = (ev) => handleFileLoad(ev.target?.result as string, file.name.replace(/\.gpx$/i, ''));
     reader.readAsText(file);
   };
 
   const handleReset = () => {
     localStorage.removeItem('gpx-last');
+    localStorage.removeItem('gpx-name');
     setGpxData(null);
+    setTrackName(null);
     setError(null);
     setIs3D(false);
     setCamera2D(null);
@@ -144,6 +167,12 @@ export default function App() {
           >
             {t('appName')}
           </h1>
+          {trackName && (
+            <>
+              <span className="header__sep" aria-hidden="true">/</span>
+              <span className="header__track-name" title={trackName}>{trackName}</span>
+            </>
+          )}
         </div>
         <div className="header__right">
           {gpxData && (
@@ -205,14 +234,14 @@ export default function App() {
                 </button>
               </div>
               {is3D ? (
-                <Map3DView key={mapKey} points={gpxData.points} hoverPoint={hoverPoint} pinnedPoint={pinnedPoint} onUnpin={() => setPinnedPoint(null)} cameraState={camera3D} onCameraChange={setCamera3D} />
+                <Map3DView key={mapKey} points={gpxData.points} hoverPoint={hoverPoint} pinnedPoint={pinnedPoint} onUnpin={() => setPinnedPoint(null)} cameraState={camera3D} onCameraChange={setCamera3D} onMapHover={handleMapHover} />
               ) : (
-                <MapView key={mapKey} points={gpxData.points} hoverPoint={hoverPoint} pinnedPoint={pinnedPoint} onUnpin={() => setPinnedPoint(null)} cameraState={camera2D} onCameraChange={setCamera2D} />
+                <MapView key={mapKey} points={gpxData.points} hoverPoint={hoverPoint} pinnedPoint={pinnedPoint} onUnpin={() => setPinnedPoint(null)} cameraState={camera2D} onCameraChange={setCamera2D} onMapHover={handleMapHover} />
               )}
             </div>
             <div className="content__sidebar">
               <MetricsPanel metrics={gpxData.metrics} />
-              <ElevationChart chartData={gpxData.chartData} onHover={setHoverPoint} onPin={setPinnedPoint} />
+              <ElevationChart chartData={gpxData.chartData} onHover={setHoverPoint} onPin={setPinnedPoint} mapHoverDistance={mapHoverDistance} />
             </div>
           </div>
         )}

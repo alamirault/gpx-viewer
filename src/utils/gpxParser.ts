@@ -25,6 +25,7 @@ export interface GpxMetrics {
 }
 
 export interface GpxData {
+  name: string | null;
   points: GpxPoint[];
   chartData: ChartDataPoint[];
   metrics: GpxMetrics;
@@ -53,6 +54,11 @@ export function parseGPX(gpxString: string): GpxData {
   if (parseError) {
     throw new Error('Invalid GPX file: XML parsing failed');
   }
+
+  // Extract track name: prefer <trk><name>, fallback to <metadata><name>
+  const trkName = doc.querySelector('trk > name')?.textContent?.trim() ?? null;
+  const metaName = doc.querySelector('metadata > name')?.textContent?.trim() ?? null;
+  const trackName = trkName ?? metaName;
 
   const trkpts = doc.querySelectorAll('trkpt');
   if (trkpts.length === 0) {
@@ -136,6 +142,7 @@ export function parseGPX(gpxString: string): GpxData {
   }));
 
   return {
+    name: trackName,
     points,
     chartData,
     metrics: {

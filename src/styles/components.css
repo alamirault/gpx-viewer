@@ -19,6 +19,30 @@
   margin: 0;
 }
 
+.header__left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.header__sep {
+  color: var(--color-border);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-regular);
+  flex-shrink: 0;
+}
+
+.header__track-name {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
 .header__right {
   display: flex;
   align-items: center;

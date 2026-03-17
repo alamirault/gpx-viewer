@@ -38,6 +38,26 @@ const endIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
+function MapHoverListener({ onMapHover }: { onMapHover: (p: { lat: number; lon: number } | null) => void }) {
+  const map = useMap();
+  const onMapHoverRef = useRef<typeof onMapHover>(onMapHover);
+  onMapHoverRef.current = onMapHover;
+
+  useEffect(() => {
+    const handleMove = (e: L.LeafletMouseEvent) =>
+      onMapHoverRef.current({ lat: e.latlng.lat, lon: e.latlng.lng });
+    const handleOut = () => onMapHoverRef.current(null);
+    map.on('mousemove', handleMove);
+    map.on('mouseout', handleOut);
+    return () => {
+      map.off('mousemove', handleMove);
+      map.off('mouseout', handleOut);
+    };
+  }, [map]);
+
+  return null;
+}
+
 function CameraSync({ onCameraChange }: { onCameraChange: (c: CameraState) => void }) {
   const map = useMapEvents({
     moveend: () => {
@@ -123,9 +143,10 @@ interface MapViewProps {
   onUnpin: () => void;
   cameraState: CameraState | null;
   onCameraChange: (c: CameraState) => void;
+  onMapHover: (p: { lat: number; lon: number } | null) => void;
 }
 
-export default function MapView({ points, hoverPoint, pinnedPoint, onUnpin, cameraState, onCameraChange }: MapViewProps) {
+export default function MapView({ points, hoverPoint, pinnedPoint, onUnpin, cameraState, onCameraChange, onMapHover }: MapViewProps) {
   const positions = points.map((p) => [p.lat, p.lon] as L.LatLngTuple);
   const start = positions[0]!;
   const end = positions[positions.length - 1]!;
@@ -152,6 +173,7 @@ export default function MapView({ points, hoverPoint, pinnedPoint, onUnpin, came
         <ZoomControl />
         {!cameraState && <FitBounds points={points} />}
         <CameraSync onCameraChange={onCameraChange} />
+        <MapHoverListener onMapHover={onMapHover} />
         <HoverMarker point={hoverPoint} />
         <PinnedMarker point={pinnedPoint} onUnpin={onUnpin} />
       </MapContainer>

@@ -28,9 +28,10 @@ interface Map3DViewProps {
   onUnpin: () => void;
   cameraState: CameraState | null;
   onCameraChange: (c: CameraState) => void;
+  onMapHover: (p: { lat: number; lon: number } | null) => void;
 }
 
-export default function Map3DView({ points, hoverPoint, pinnedPoint, onUnpin, cameraState, onCameraChange }: Map3DViewProps) {
+export default function Map3DView({ points, hoverPoint, pinnedPoint, onUnpin, cameraState, onCameraChange, onMapHover }: Map3DViewProps) {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -40,6 +41,8 @@ export default function Map3DView({ points, hoverPoint, pinnedPoint, onUnpin, ca
   const viewModeRef = useRef<ViewMode>('satellite');
   // Store initial camera state for the reset button
   const initialCameraRef = useRef<{ bearing: number; pitch: number; bounds: [[number, number], [number, number]] } | null>(null);
+  const onMapHoverRef = useRef(onMapHover);
+  onMapHoverRef.current = onMapHover;
   // Hover marker from elevation chart
   const hoverMarkerRef = useRef<maplibregl.Marker | null>(null);
   // Pinned marker (click on chart)
@@ -303,6 +306,16 @@ export default function Map3DView({ points, hoverPoint, pinnedPoint, onUnpin, ca
           { padding: 60, pitch: 70, bearing, duration: 1200 }
         );
       }
+
+      // Map hover → elevation chart sync
+      map.on('mousemove', (e) => {
+        if (destroyed) return;
+        onMapHoverRef.current({ lat: e.lngLat.lat, lon: e.lngLat.lng });
+      });
+      map.on('mouseout', () => {
+        if (destroyed) return;
+        onMapHoverRef.current(null);
+      });
 
       // Sync camera state on every move (pan, zoom, rotate, pitch)
       map.on('moveend', () => {
