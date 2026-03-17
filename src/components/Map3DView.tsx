@@ -144,6 +144,38 @@ export default function Map3DView({ points }: Map3DViewProps) {
 
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
 
+    // Custom right-click drag: replace default dragRotate with slower sensitivity
+    map.dragRotate.disable();
+    const ROTATION_SPEED = 0.12; // degrees per pixel (default MapLibre ≈ 1.0)
+    let rotating = false;
+    let lastMouseX = 0;
+    let lastMouseY = 0;
+    const canvas = map.getCanvas();
+
+    const onMouseDown = (e: MouseEvent) => {
+      if (e.button !== 2) return;
+      rotating = true;
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+      e.preventDefault();
+    };
+    const onMouseMove = (e: MouseEvent) => {
+      if (!rotating) return;
+      const dx = e.clientX - lastMouseX;
+      const dy = e.clientY - lastMouseY;
+      map.setBearing(map.getBearing() - dx * ROTATION_SPEED);
+      map.setPitch(Math.max(0, Math.min(85, map.getPitch() + dy * ROTATION_SPEED)));
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+    };
+    const onMouseUp = (e: MouseEvent) => { if (e.button === 2) rotating = false; };
+    const onContextMenu = (e: MouseEvent) => e.preventDefault();
+
+    canvas.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    canvas.addEventListener('contextmenu', onContextMenu);
+
     map.on('load', () => {
       if (destroyed) return;
 
@@ -218,6 +250,10 @@ export default function Map3DView({ points }: Map3DViewProps) {
     return () => {
       destroyed = true;
       mapLoadedRef.current = false;
+      canvas.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      canvas.removeEventListener('contextmenu', onContextMenu);
       map.remove();
       mapRef.current = null;
     };
