@@ -23,7 +23,9 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [is3D, setIs3D] = useState(false);
   const [hoverPoint, setHoverPoint] = useState<{ lat: number; lon: number } | null>(null);
-  const [cameraState, setCameraState] = useState<CameraState | null>(null);
+  // Separate camera state per view so zoom mismatch between pitched 3D and flat 2D is avoided
+  const [camera2D, setCamera2D] = useState<CameraState | null>(null);
+  const [camera3D, setCamera3D] = useState<CameraState | null>(null);
 
   // Restore last GPX from localStorage on first load
   useEffect(() => {
@@ -41,7 +43,8 @@ export default function App() {
       setError(null);
       const data = parseGPX(gpxString);
       localStorage.setItem('gpx-last', gpxString);
-      setCameraState(null); // reset camera so fitBounds runs on new file
+      setCamera2D(null);
+      setCamera3D(null);
       setGpxData(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -54,7 +57,8 @@ export default function App() {
     setGpxData(null);
     setError(null);
     setIs3D(false);
-    setCameraState(null);
+    setCamera2D(null);
+    setCamera3D(null);
   };
 
   return (
@@ -101,9 +105,9 @@ export default function App() {
                 </button>
               </div>
               {is3D ? (
-                <Map3DView points={gpxData.points} hoverPoint={hoverPoint} cameraState={cameraState} onCameraChange={setCameraState} />
+                <Map3DView points={gpxData.points} hoverPoint={hoverPoint} cameraState={camera3D} onCameraChange={setCamera3D} />
               ) : (
-                <MapView points={gpxData.points} hoverPoint={hoverPoint} cameraState={cameraState} onCameraChange={setCameraState} />
+                <MapView points={gpxData.points} hoverPoint={hoverPoint} cameraState={camera2D} onCameraChange={setCamera2D} />
               )}
             </div>
             <div className="content__sidebar">
