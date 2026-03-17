@@ -1,9 +1,12 @@
-import { useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Polyline, Marker, useMap, useMapEvents } from 'react-leaflet';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { MapContainer, TileLayer, Polyline, GeoJSON, Marker, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { useTranslation } from 'react-i18next';
 import type { GpxPoint } from '../utils/gpxParser';
 import type { CameraState } from '../App';
+import { buildTrackGeoJSON } from '../utils/map3dUtils';
 
 const hoverIcon = L.divIcon({
   className: 'map-hover-marker',
@@ -37,6 +40,57 @@ const endIcon = new L.Icon({
   popupAnchor: [1, -34],
   shadowSize: [41, 41],
 });
+
+function ColorModeControl({ colorMode, onColorModeChange, hasElevation }: {
+  colorMode: 'red' | 'elevation';
+  onColorModeChange: (m: 'red' | 'elevation') => void;
+  hasElevation: boolean;
+}) {
+  const { t } = useTranslation();
+  const map = useMap();
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const container = L.DomUtil.create('div', 'map-3d__mode-toggle');
+    container.setAttribute('role', 'group');
+    container.setAttribute('aria-label', t('map.viewMode'));
+    // Override position: absolute from CSS — inside Leaflet control pane, use margin instead
+    container.style.position = 'relative';
+    container.style.top = 'auto';
+    container.style.left = 'auto';
+    container.style.margin = '12px 0 0 12px';
+    L.DomEvent.disableClickPropagation(container);
+    L.DomEvent.disableScrollPropagation(container);
+    const Control = L.Control.extend({ onAdd: () => container });
+    const ctrl = new (Control as any)({ position: 'topleft' });
+    ctrl.addTo(map);
+    setPortalTarget(container);
+    return () => { ctrl.remove(); setPortalTarget(null); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map]);
+
+  if (!portalTarget) return null;
+  return createPortal(
+    <>
+      <button
+        className={`map-3d__mode-btn${colorMode === 'red' ? ' map-3d__mode-btn--active' : ''}`}
+        onClick={() => onColorModeChange('red')}
+        aria-pressed={colorMode === 'red'}
+      >
+        {t('map.colorRed')}
+      </button>
+      <button
+        className={`map-3d__mode-btn${colorMode === 'elevation' ? ' map-3d__mode-btn--active' : ''}`}
+        onClick={() => onColorModeChange('elevation')}
+        aria-pressed={colorMode === 'elevation'}
+        disabled={!hasElevation}
+      >
+        {t('map.colorElevation')}
+      </button>
+    </>,
+    portalTarget
+  );
+}
 
 function MapHoverListener({ onMapHover }: { onMapHover: (p: { lat: number; lon: number } | null) => void }) {
   const map = useMap();
@@ -147,15 +201,24 @@ interface MapViewProps {
 }
 
 export default function MapView({ points, hoverPoint, pinnedPoint, onUnpin, cameraState, onCameraChange, onMapHover }: MapViewProps) {
+  const { t } = useTranslation();
+  const [colorMode, setColorMode] = useState<'red' | 'elevation'>('red');
+
   const positions = points.map((p) => [p.lat, p.lon] as L.LatLngTuple);
   const start = positions[0]!;
   const end = positions[positions.length - 1]!;
+
+  const eles = points.map((p) => p.ele ?? 0);
+  const eleMin = eles.reduce((a, b) => Math.min(a, b), Infinity);
+  const eleMax = eles.reduce((a, b) => Math.max(a, b), -Infinity);
+  const hasElevation = points.some((p) => p.ele !== null);
+  const elevationGeoJSON = hasElevation ? buildTrackGeoJSON(points, eleMin, eleMax) : null;
 
   const initialCenter = cameraState ? [cameraState.center[0], cameraState.center[1]] as L.LatLngTuple : start;
   const initialZoom = cameraState ? cameraState.zoom : 13;
 
   return (
-    <div className="map-container">
+    <div className="map-container" style={{ position: 'relative' }}>
       <MapContainer
         center={initialCenter}
         zoom={initialZoom}
@@ -167,9 +230,18 @@ export default function MapView({ points, hoverPoint, pinnedPoint, onUnpin, came
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <Polyline positions={positions} color="#2E7D5B" weight={4} />
+        {colorMode === 'red' || !elevationGeoJSON ? (
+          <Polyline positions={positions} color="#FF0000" weight={4} />
+        ) : (
+          <GeoJSON
+            key={`elev-${points.length}`}
+            data={elevationGeoJSON}
+            style={(feature) => ({ color: feature?.properties?.color ?? '#3B82F6', weight: 4 })}
+          />
+        )}
         <Marker position={start} icon={startIcon} />
         <Marker position={end} icon={endIcon} />
+        <ColorModeControl colorMode={colorMode} onColorModeChange={setColorMode} hasElevation={hasElevation} />
         <ZoomControl />
         {!cameraState && <FitBounds points={points} />}
         <CameraSync onCameraChange={onCameraChange} />
@@ -177,6 +249,16 @@ export default function MapView({ points, hoverPoint, pinnedPoint, onUnpin, came
         <HoverMarker point={hoverPoint} />
         <PinnedMarker point={pinnedPoint} onUnpin={onUnpin} />
       </MapContainer>
+
+      {colorMode === 'elevation' && hasElevation && (
+        <div className="map-3d__legend">
+          <div className="map-3d__legend-bar" />
+          <div className="map-3d__legend-labels">
+            <span>{Math.round(eleMax)} m</span>
+            <span>{Math.round(eleMin)} m</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

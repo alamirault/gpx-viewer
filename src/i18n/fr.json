@@ -38,7 +38,9 @@
     "modeSatellite": "Satellite",
     "modeTerrain": "Terrain",
     "startPoint": "Départ",
-    "endPoint": "Arrivée"
+    "endPoint": "Arrivée",
+    "colorRed": "Tracé",
+    "colorElevation": "Dénivelé"
   },
   "hero": {
     "tagline": "Explorez vos traces GPS",

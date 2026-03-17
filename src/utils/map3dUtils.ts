@@ -15,15 +15,15 @@ export function lerpColor(a: string, b: string, t: number): string {
 }
 
 export function elevationColor(t: number): string {
-  if (t < 0.4) {
-    const s = t / 0.4;
-    return lerpColor('#3B82F6', '#10B981', s);
-  } else if (t < 0.7) {
-    const s = (t - 0.4) / 0.3;
-    return lerpColor('#10B981', '#F59E0B', s);
+  if (t < 0.33) {
+    const s = t / 0.33;
+    return lerpColor('#22C55E', '#EAB308', s); // green → yellow
+  } else if (t < 0.66) {
+    const s = (t - 0.33) / 0.33;
+    return lerpColor('#EAB308', '#F97316', s); // yellow → orange
   } else {
-    const s = (t - 0.7) / 0.3;
-    return lerpColor('#F59E0B', '#EF4444', s);
+    const s = (t - 0.66) / 0.34;
+    return lerpColor('#F97316', '#EF4444', s); // orange → red
   }
 }
 

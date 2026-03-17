@@ -479,7 +479,7 @@
   width: 10px;
   height: 100px;
   border-radius: var(--radius-sm);
-  background: linear-gradient(to bottom, #EF4444, #F59E0B, #10B981, #3B82F6);
+  background: linear-gradient(to bottom, #EF4444, #F97316, #EAB308, #22C55E);
   box-shadow: var(--shadow-sm);
 }
 

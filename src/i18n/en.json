@@ -38,7 +38,9 @@
     "modeSatellite": "Satellite",
     "modeTerrain": "Terrain",
     "startPoint": "Start",
-    "endPoint": "End"
+    "endPoint": "End",
+    "colorRed": "Track",
+    "colorElevation": "Elevation"
   },
   "hero": {
     "tagline": "Explore your GPS tracks",
